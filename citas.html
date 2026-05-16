@@ -82,7 +82,7 @@
                   <div class="mb-6 inline-flex items-center gap-4 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur">
                     <img src="./assets/ecoalfa-logo.svg" alt="Logo Ecoalfa" class="h-20 w-20 rounded-2xl bg-white object-contain" />
                     <div>
-                      <p class="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-200">Ecoalfa</p>
+                      <p class="text-sm font-semibold uppercase tracking-[0.3em] text-blue-200">Ecoalfa</p>
                       <p class="text-sm text-white/70">Completa tu perfil</p>
                     </div>
                   </div>
@@ -108,7 +108,7 @@
                     <p id="profile-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
                   </div>
                   <div class="sm:col-span-2">
-                    <button class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white" type="submit">Guardar mi perfil y continuar</button>
+                    <button class="w-full rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white" type="submit">Guardar mi perfil y continuar</button>
                   </div>
                 </form>
               </div>
@@ -147,7 +147,7 @@
 
       function showProfileMessage(message, type) {
         const box = document.querySelector("#profile-message");
-        box.className = `rounded-xl px-4 py-3 text-sm ${type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`;
+        box.className = `rounded-xl px-4 py-3 text-sm ${type === "success" ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700"}`;
         box.textContent = message;
         box.classList.remove("hidden");
       }
@@ -163,14 +163,14 @@
                     <div class="mb-6 inline-flex items-center gap-4 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur">
                       <img src="./assets/ecoalfa-logo.svg" alt="Logo Ecoalfa" class="h-20 w-20 rounded-2xl bg-white object-contain" />
                       <div>
-                        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-200">Ecoalfa</p>
+                        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-blue-200">Ecoalfa</p>
                         <p class="text-sm text-white/70">Su salud es lo más importante</p>
                       </div>
                     </div>
                     <h1 class="max-w-2xl text-4xl font-black tracking-tight md:text-6xl">Portal digital de pacientes</h1>
                     <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-200">Consulta tus citas, facturas, medicamentos e historia clínica en un espacio privado, moderno y conectado con Ecoalfa.</p>
                     <div class="mt-8 grid gap-4 sm:grid-cols-3">
-                      <div class="rounded-3xl border border-white/10 bg-white/10 p-5 shadow-xl backdrop-blur"><strong>Mis citas</strong><p class="mt-1 text-sm text-emerald-100">Agenda y seguimiento.</p></div>
+                      <div class="rounded-3xl border border-white/10 bg-white/10 p-5 shadow-xl backdrop-blur"><strong>Mis citas</strong><p class="mt-1 text-sm text-blue-100">Agenda y seguimiento.</p></div>
                       <div class="rounded-3xl border border-white/10 bg-white/10 p-5 shadow-xl backdrop-blur"><strong>Mi historia</strong><p class="mt-1 text-sm text-sky-100">Resumen clínico seguro.</p></div>
                       <div class="rounded-3xl border border-white/10 bg-white/10 p-5 shadow-xl backdrop-blur"><strong>Mis compras</strong><p class="mt-1 text-sm text-lime-100">Facturas y fórmulas.</p></div>
                     </div>
@@ -178,7 +178,7 @@
 
                 <div class="rounded-3xl border border-white/10 bg-white/95 p-6 text-slate-900 shadow-2xl backdrop-blur">
                   <div class="mb-5 grid grid-cols-2 gap-2 rounded-2xl bg-white p-1">
-                    <button id="show-login" class="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white" type="button">Ingresar</button>
+                    <button id="show-login" class="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white" type="button">Ingresar</button>
                     <button id="show-register" class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600" type="button">Registrarme</button>
                   </div>
                   ${message ? `<p class="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">${message}</p>` : ""}
@@ -206,7 +206,7 @@
             <label class="block text-sm font-medium">Correo electrónico<input id="login-email" type="email" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
             <label class="block text-sm font-medium">Contraseña<input id="login-password" type="password" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
             <p id="auth-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
-            <button class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white" type="submit">Entrar a mi portal</button>
+            <button class="w-full rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white" type="submit">Entrar a mi portal</button>
           </form>
         `;
 
@@ -241,7 +241,7 @@
               ${inputField("municipality", "Municipio", "text", true)}
             </div>
             <p id="auth-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
-            <button class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white" type="submit">Crear mi usuario de paciente</button>
+            <button class="w-full rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white" type="submit">Crear mi usuario de paciente</button>
           </form>
         `;
 
@@ -305,8 +305,8 @@
           const width = canvas.width / window.devicePixelRatio;
           const height = canvas.height / window.devicePixelRatio;
           const gradient = context.createLinearGradient(0, 0, width, height);
-          gradient.addColorStop(0, "#052e2b");
-          gradient.addColorStop(0.45, "#064e3b");
+          gradient.addColorStop(0, "#0c1e3d");
+          gradient.addColorStop(0.45, "#1e3a5f");
           gradient.addColorStop(1, "#0f172a");
 
           context.clearRect(0, 0, width, height);
@@ -314,7 +314,7 @@
           context.fillRect(0, 0, width, height);
 
           context.globalAlpha = 0.2;
-          context.fillStyle = "#22c55e";
+          context.fillStyle = "#3b82f6";
           context.beginPath();
           context.arc(width * 0.9, height * 0.05, height * 0.7, 0, Math.PI * 2);
           context.fill();
@@ -332,7 +332,7 @@
           particles.forEach((particle) => {
             const x = particle.x * width + Math.sin(time * particle.speed + particle.phase) * 24;
             const y = particle.y * height + Math.cos(time * particle.speed + particle.phase) * 18;
-            context.fillStyle = particle.radius > 4 ? "#86efac" : "#bae6fd";
+            context.fillStyle = particle.radius > 4 ? "#93c5fd" : "#bae6fd";
             context.beginPath();
             context.arc(x, y, particle.radius, 0, Math.PI * 2);
             context.fill();
@@ -356,12 +356,12 @@
                   <img src="./assets/ecoalfa-logo.svg" alt="Logo Ecoalfa" class="h-16 w-16 rounded-xl bg-white object-contain" />
                   <div>
                     <h1 class="text-2xl font-bold">Portal de pacientes</h1>
-                    <p class="text-sm text-emerald-200">${patient?.fullName || user.email}</p>
+                    <p class="text-sm text-blue-200">${patient?.fullName || user.email}</p>
                   </div>
                 </div>
                 <div class="flex gap-3">
                   <a href="./index.html" class="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20">Funcionarios</a>
-                  <button id="logout" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold hover:bg-emerald-700">Salir</button>
+                  <button id="logout" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-700">Salir</button>
                 </div>
               </div>
             </header>
@@ -639,13 +639,13 @@
 
       function showAuthMessage(text, type) {
         const box = document.querySelector("#auth-message");
-        box.className = `rounded-xl px-4 py-3 text-sm ${type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`;
+        box.className = `rounded-xl px-4 py-3 text-sm ${type === "success" ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700"}`;
         box.textContent = text;
       }
 
       function showPortalMessage(text, type) {
         const box = document.querySelector("#portal-message");
-        box.className = `rounded-xl px-4 py-3 text-sm ${type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`;
+        box.className = `rounded-xl px-4 py-3 text-sm ${type === "success" ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700"}`;
         box.textContent = text;
       }
     </script>

@@ -1,5 +1,6 @@
 import { renderLogin } from "./auth/login.ui.js";
 import { getSession, subscribeSession } from "./auth/session.js";
+import { logout } from "./firebase/auth.js";
 import { bindRouter, renderProtectedApp } from "./ui/router.js";
 
 const appContainer = document.querySelector("#app");
@@ -33,15 +34,16 @@ subscribeSession((session) => {
   }
 
   if (!session.profile || session.profile.active === false) {
+    logout();
     appContainer.innerHTML = `
       <main class="min-h-screen grid place-items-center bg-slate-100 p-6">
         <section class="max-w-lg rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
           <h1 class="text-2xl font-bold text-slate-900">Usuario sin acceso</h1>
-          <p class="mt-2 text-slate-500">Tu perfil no está activo o no tiene un rol asignado.</p>
+          <p class="mt-2 text-slate-500">Tu perfil no está activo o no tiene un rol asignado. Cerrando sesión...</p>
           <div class="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
             <p><strong>UID:</strong> ${session.user.uid}</p>
           </div>
-          <p class="mt-5 text-sm text-slate-500">Crea o corrige el documento <strong>users/${session.user.uid}</strong> en Firestore.</p>
+          <p class="mt-5 text-sm text-slate-500">Contacta al administrador para activar tu cuenta.</p>
         </section>
       </main>
     `;

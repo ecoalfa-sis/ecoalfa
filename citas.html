@@ -496,24 +496,43 @@
         }, { merge: true });
       }
 
-      async function getPatientByAuthUser(user) {
+      async function getPatientByAuthUser(user, attempt = 1) {
         const patientSnap = await getDoc(doc(db, "patients", user.uid));
         if (patientSnap.exists()) {
           const data = patientSnap.data();
           if (data.mergedInto) {
             const mainPatientSnap = await getDoc(doc(db, "patients", data.mergedInto));
             if (mainPatientSnap.exists()) {
+              console.log("Perfil encontrado via mergedInto:", mainPatientSnap.id);
               return { id: mainPatientSnap.id, ...mainPatientSnap.data() };
             }
           }
-          return { id: patientSnap.id, ...data };
+          if (data.authUid || data.source === "patient_portal") {
+            console.log("Perfil encontrado directo:", patientSnap.id);
+            return { id: patientSnap.id, ...data };
+          }
         }
         
         const q = query(collection(db, "patients"), where("authUid", "==", user.uid), limit(1));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
-          const doc = snapshot.docs[0];
-          return { id: doc.id, ...doc.data() };
+          const docSnap = snapshot.docs[0];
+          const data = docSnap.data();
+          if (data.mergedInto) {
+            const mainPatientSnap = await getDoc(doc(db, "patients", data.mergedInto));
+            if (mainPatientSnap.exists()) {
+              console.log("Perfil encontrado via authUid query + mergedInto:", mainPatientSnap.id);
+              return { id: mainPatientSnap.id, ...mainPatientSnap.data() };
+            }
+          }
+          console.log("Perfil encontrado via authUid query:", docSnap.id);
+          return { id: docSnap.id, ...data };
+        }
+        
+        if (attempt < 3) {
+          console.log(`Intento ${attempt}: perfil no encontrado, reintentando en ${attempt * 1000}ms...`);
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+          return getPatientByAuthUser(user, attempt + 1);
         }
         
         throw new Error("patient-profile-not-found");

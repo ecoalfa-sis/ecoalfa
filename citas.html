@@ -133,7 +133,10 @@
             setTimeout(() => location.reload(), 1500);
           } catch (error) {
             console.error("Error guardando perfil:", error);
-            if (error.message === "user-cancelled-link") {
+            if (error.message === "linked-success") {
+              showProfileMessage("¡Cuenta vinculada exitosamente! Redirigiendo...", "success");
+              setTimeout(() => location.reload(), 2000);
+            } else if (error.message === "user-cancelled-link") {
               showProfileMessage("Debes vincular con el paciente existente para continuar.", "error");
             } else {
               showProfileMessage("No fue posible guardar el perfil. Intenta de nuevo.", "error");
@@ -258,7 +261,10 @@
             console.error("Registro paciente falló", error);
             submitButton.disabled = false;
             submitButton.textContent = "Crear mi usuario de paciente";
-            if (error.message === "user-cancelled-link") {
+            if (error.message === "linked-success") {
+              showAuthMessage("¡Cuenta vinculada exitosamente! Redirigiendo...", "success");
+              setTimeout(() => location.reload(), 2000);
+            } else if (error.message === "user-cancelled-link") {
               showAuthMessage("Registro cancelado. Para continuar debes vincular con el paciente existente o contactar al consultorio.", "error");
             } else if (error.code === "auth/email-already-in-use") {
               showAuthMessage("Este correo ya está registrado. Intenta iniciar sesión.", "error");
@@ -465,8 +471,7 @@
             mergedAt: serverTimestamp()
           });
           
-          showAuthMessage("Cuenta vinculada exitosamente. Ahora puedes ingresar con tu correo.", "success");
-          return;
+          throw new Error("linked-success");
         }
         
         await setDoc(doc(db, "patients", uid), {

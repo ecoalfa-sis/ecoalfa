@@ -13,6 +13,8 @@ subscribeSession((session) => {
   }
 
   if (session.error) {
+    const helpText = getSessionErrorHelp(session.error);
+
     appContainer.innerHTML = `
       <main class="min-h-screen grid place-items-center bg-slate-100 p-6">
         <section class="max-w-xl rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
@@ -22,6 +24,7 @@ subscribeSession((session) => {
             <p><strong>UID:</strong> ${session.user.uid}</p>
             <p class="mt-2"><strong>Código:</strong> ${session.error.code || "desconocido"}</p>
           </div>
+          <div class="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">${helpText}</div>
           <p class="mt-5 text-sm text-slate-500">Verifica que exista el documento <strong>users/${session.user.uid}</strong> con un rol válido y <strong>active: true</strong>.</p>
         </section>
       </main>
@@ -47,3 +50,15 @@ subscribeSession((session) => {
 
   renderProtectedApp(appContainer, session);
 });
+
+function getSessionErrorHelp(error) {
+  if (error.code === "unavailable") {
+    return "Firestore no está respondiendo desde el navegador. Revisa tu conexión, bloqueadores de anuncios/extensiones, que Firestore Database esté creado en Firebase Console y que el dominio de GitHub Pages esté autorizado en Firebase Authentication.";
+  }
+
+  if (error.code === "permission-denied") {
+    return "Firestore rechazó la lectura por reglas de seguridad. Publica temporalmente firestore.bootstrap.rules para inicializar o crea manualmente users/{uid} con role admin y active true.";
+  }
+
+  return "Abre la consola de Chrome para ver el detalle completo del error y verifica la configuración de Firebase.";
+}

@@ -58,3 +58,19 @@
 - El documento debe tener un `role` válido: `admin`, `medico`, `operador` o `asesor`.
 - El documento debe tener `active: true` como booleano, no como texto.
 - Publica `firestore.rules` después de cambiar reglas.
+
+## 7. Inicialización rápida con iniciar.html
+
+`iniciar.html` es una herramienta temporal para crear datos de prueba y comprobar conexión con Firebase.
+
+Flujo recomendado si Firestore está vacío:
+
+1. Publica temporalmente `firestore.bootstrap.rules` en Firestore Rules.
+2. Abre `iniciar.html` desde GitHub Pages.
+3. Inicia sesión con el usuario creado en Firebase Authentication.
+4. Haz clic en `Iniciar / Crear datos de prueba`.
+5. Verifica los logs en pantalla y en la consola de Chrome.
+6. Vuelve a publicar las reglas finales desde `firestore.rules`.
+7. Entra al sistema desde `index.html`.
+
+Importante: no dejes `firestore.bootstrap.rules` publicadas en producción. Solo sirven para arranque inicial y diagnóstico.

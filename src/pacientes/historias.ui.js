@@ -15,65 +15,289 @@ let canLoadMorePatients = false;
 let canLoadMoreRecords = false;
 
 export async function renderHistoriasModule(container) {
-  container.innerHTML = renderShell();
-  bindEvents(container);
-  await loadPatients(container, true);
+  container.innerHTML = renderMainView();
+  bindMainEvents(container);
   await selectStoredPatient(container);
 }
 
-function renderShell() {
+function renderMainView() {
   return `
     <section class="space-y-6">
-      <div class="overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-sm ring-1 ring-slate-800">
-        <div class="grid gap-6 p-6 lg:grid-cols-[1fr_360px] lg:items-center">
-          <div>
-            <p class="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-300">EMR Ecoalfa</p>
-            <h2 class="mt-3 text-3xl font-black tracking-tight lg:text-5xl">Historia clínica profesional</h2>
-            <p class="mt-4 max-w-3xl text-slate-300">Módulo médico para consulta, evolución, diagnóstico, prescripción, seguimiento y generación de PDF por visita.</p>
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900">Historias clínicas</h2>
+        <p class="text-slate-500">Gestión médica de consultas, evoluciones y prescripciones.</p>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-2">
+        <button id="open-patient-search" class="group rounded-2xl bg-emerald-600 p-8 text-left text-white shadow-lg transition hover:bg-emerald-700 hover:shadow-xl">
+          <div class="flex items-center gap-4">
+            <div class="rounded-xl bg-white/20 p-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold">Buscar paciente</h3>
+              <p class="mt-1 text-sm text-emerald-100">Seleccionar paciente para ver historial o registrar consulta.</p>
+            </div>
           </div>
-          <div class="grid grid-cols-3 gap-3 text-center">
-            <div class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10"><strong class="block text-2xl">SOAP</strong><span class="text-xs text-slate-300">Evolución</span></div>
-            <div class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10"><strong class="block text-2xl">PDF</strong><span class="text-xs text-slate-300">Soporte</span></div>
-            <div class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10"><strong class="block text-2xl">CIE</strong><span class="text-xs text-slate-300">Diagnóstico</span></div>
+        </button>
+
+        <button id="open-consultation-form" class="group rounded-2xl bg-slate-700 p-8 text-left text-white shadow-lg transition hover:bg-slate-800 hover:shadow-xl" ${!selectedPatient ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+          <div class="flex items-center gap-4">
+            <div class="rounded-xl bg-white/20 p-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold">Registrar consulta</h3>
+              <p class="mt-1 text-sm text-slate-300">${selectedPatient ? `Paciente: ${selectedPatient.fullName}` : "Primero seleccione un paciente"}</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-3">
+        <article class="rounded-2xl bg-emerald-50 p-5 text-emerald-950 ring-1 ring-emerald-100">
+          <p class="text-sm font-medium text-emerald-700">Estructura</p>
+          <strong class="mt-2 block text-2xl">SOAP</strong>
+          <p class="mt-2 text-sm">Subjetivo, Objetivo, Análisis y Plan de manejo médico.</p>
+        </article>
+        <article class="rounded-2xl bg-sky-50 p-5 text-sky-950 ring-1 ring-sky-100">
+          <p class="text-sm font-medium text-sky-700">Prescripción</p>
+          <strong class="mt-2 block text-2xl">Fórmula médica</strong>
+          <p class="mt-2 text-sm">Medicamentos, dosis, frecuencia y duración del tratamiento.</p>
+        </article>
+        <article class="rounded-2xl bg-lime-50 p-5 text-lime-950 ring-1 ring-lime-100">
+          <p class="text-sm font-medium text-lime-700">Documentación</p>
+          <strong class="mt-2 block text-2xl">PDF</strong>
+          <p class="mt-2 text-sm">Generación de documento imprimible por cada consulta.</p>
+        </article>
+      </div>
+
+      <!-- Modal Buscar Paciente -->
+      <div id="patient-search-modal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm">
+        <div class="flex min-h-screen items-center justify-center p-4">
+          <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
+              <h3 class="text-xl font-bold text-slate-900">Buscar paciente</h3>
+              <button id="close-search-modal" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="mb-4 flex gap-2">
+              <input id="history-patient-search" placeholder="Buscar por nombre o documento" class="flex-1 rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+              <button id="history-search-patient" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Buscar</button>
+              <button id="history-refresh-patients" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Todos</button>
+            </div>
+
+            <div id="history-patients-list" class="max-h-[400px] overflow-y-auto space-y-2">
+              <div class="p-6 text-sm text-slate-500 text-center">Haga clic en "Todos" para cargar pacientes.</div>
+            </div>
+
+            <div class="mt-4 flex justify-end">
+              <button id="history-load-more-patients" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50" disabled>Cargar más</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="grid gap-6 2xl:grid-cols-[360px_1fr]">
-        <aside class="space-y-4">
-          <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <h3 class="font-semibold text-slate-900">Buscar paciente</h3>
-            <p class="mt-1 text-sm text-slate-500">Selecciona un paciente registrado desde Pacientes o el portal de citas.</p>
-            <div class="mt-4 flex gap-2">
-              <input id="history-patient-search" placeholder="Documento" class="min-w-0 flex-1 rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-              <button id="history-search-patient" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Buscar</button>
+      <!-- Modal Registrar Consulta -->
+      <div id="consultation-modal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm">
+        <div class="flex min-h-screen items-center justify-center p-4">
+          <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
+              <div>
+                <h3 class="text-xl font-bold text-slate-900">Registrar consulta médica</h3>
+                <p id="consultation-patient-name" class="text-sm text-slate-500 mt-1">Paciente: ${selectedPatient?.fullName || "No seleccionado"}</p>
+              </div>
+              <button id="close-consultation-modal" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="grid gap-6 xl:grid-cols-[1fr_420px]">
+              <section class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div class="mb-4 flex items-center justify-between">
+                  <h4 class="text-lg font-bold text-slate-900">Historial de consultas</h4>
+                </div>
+                <div id="clinical-records-list" class="space-y-4 max-h-[500px] overflow-y-auto">
+                  <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500 text-center">
+                    Seleccione un paciente para ver su historial clínico.
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <button id="load-more-records" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50" disabled>Cargar más visitas</button>
+                </div>
+              </section>
+
+              <form id="clinical-record-form" class="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+                <h4 class="text-lg font-bold text-slate-900">Nueva atención</h4>
+                <p class="mt-1 text-sm text-slate-500">Complete los campos clínicos.</p>
+
+                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-consultationDate">Fecha *</label>
+                    <input id="record-consultationDate" type="date" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-doctorName">Médico tratante</label>
+                    <input id="record-doctorName" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-cie10">CIE-10</label>
+                    <input id="record-cie10" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-nextControl">Próximo control</label>
+                    <input id="record-nextControl" type="date" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-reason">Motivo de consulta *</label>
+                    <textarea id="record-reason" rows="2" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-currentIllness">Enfermedad actual *</label>
+                    <textarea id="record-currentIllness" rows="3" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-personalHistory">Antecedentes relevantes</label>
+                    <textarea id="record-personalHistory" rows="2" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                  </div>
+                </div>
+
+                <div class="mt-4 grid gap-3 sm:grid-cols-4">
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-bloodPressure">TA</label>
+                    <input id="record-bloodPressure" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-heartRate">FC</label>
+                    <input id="record-heartRate" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-temperature">Temp.</label>
+                    <input id="record-temperature" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-weight">Peso</label>
+                    <input id="record-weight" type="text" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-physicalExam">Examen físico</label>
+                    <textarea id="record-physicalExam" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-diagnosis">Diagnóstico *</label>
+                    <textarea id="record-diagnosis" rows="2" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-treatmentPlan">Plan de manejo</label>
+                    <textarea id="record-treatmentPlan" rows="2" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-prescription">Prescripción / fórmula *</label>
+                    <textarea id="record-prescription" rows="3" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="record-recommendations">Recomendaciones</label>
+                    <textarea id="record-recommendations" rows="2" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                  </div>
+                </div>
+
+                <p id="clinical-message" class="mt-4 hidden rounded-xl px-4 py-3 text-sm"></p>
+                <button class="mt-4 w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white hover:bg-emerald-800" type="submit">Guardar visita clínica</button>
+              </form>
             </div>
           </div>
-
-          <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-            <div class="flex items-center justify-between border-b border-slate-200 p-4">
-              <h3 class="font-semibold text-slate-900">Pacientes</h3>
-              <button id="history-refresh-patients" class="text-sm font-medium text-emerald-700">Todos</button>
-            </div>
-            <div id="history-patients-list" class="max-h-[620px] overflow-y-auto p-3"></div>
-            <div class="border-t border-slate-200 p-3 text-right">
-              <button id="history-load-more-patients" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700">Cargar más</button>
-            </div>
-          </div>
-        </aside>
-
-        <div id="clinical-workspace" class="min-h-[700px] rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          ${renderEmptyWorkspace()}
         </div>
       </div>
     </section>
   `;
 }
 
-function bindEvents(container) {
+function bindMainEvents(container) {
+  // Abrir modal de búsqueda
+  container.querySelector("#open-patient-search").addEventListener("click", () => {
+    container.querySelector("#patient-search-modal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    loadPatients(container, true);
+  });
+
+  // Cerrar modal de búsqueda
+  container.querySelector("#close-search-modal").addEventListener("click", () => {
+    closeSearchModal(container);
+  });
+
+  // Cerrar al hacer click fuera
+  container.querySelector("#patient-search-modal").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) {
+      closeSearchModal(container);
+    }
+  });
+
+  // Abrir modal de consulta
+  container.querySelector("#open-consultation-form")?.addEventListener("click", () => {
+    if (!selectedPatient) {
+      alert("Primero debe seleccionar un paciente");
+      return;
+    }
+    container.querySelector("#consultation-modal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    // Recargar historial
+    loadRecords(container, true);
+  });
+
+  // Cerrar modal de consulta
+  container.querySelector("#close-consultation-modal").addEventListener("click", () => {
+    closeConsultationModal(container);
+  });
+
+  // Cerrar al hacer click fuera
+  container.querySelector("#consultation-modal").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) {
+      closeConsultationModal(container);
+    }
+  });
+
+  // Eventos de búsqueda y paginación
   container.querySelector("#history-refresh-patients").addEventListener("click", async () => loadPatients(container, true));
   container.querySelector("#history-load-more-patients").addEventListener("click", async () => loadPatients(container, false));
   container.querySelector("#history-search-patient").addEventListener("click", async () => searchPatients(container));
+  container.querySelector("#history-patient-search").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") searchPatients(container);
+  });
+
+  // Formulario de consulta
+  container.querySelector("#clinical-record-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await saveClinicalRecord(container, event.currentTarget);
+  });
+
+  // Cargar más registros
+  container.querySelector("#load-more-records")?.addEventListener("click", async () => loadRecords(container, false));
+}
+
+function closeSearchModal(container) {
+  container.querySelector("#patient-search-modal").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function closeConsultationModal(container) {
+  container.querySelector("#consultation-modal").classList.add("hidden");
+  document.body.style.overflow = "";
 }
 
 async function loadPatients(container, reset) {
@@ -85,7 +309,7 @@ async function loadPatients(container, reset) {
     lastVisiblePatient = null;
   }
 
-  list.innerHTML = `<div class="p-4 text-sm text-slate-500">Cargando pacientes...</div>`;
+  list.innerHTML = `<div class="p-4 text-sm text-slate-500 text-center"><div class="inline-flex items-center gap-2"><div class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-600"></div>Cargando pacientes...</div></div>`;
 
   try {
     const page = await getPatientsPage(lastVisiblePatient);
@@ -93,12 +317,12 @@ async function loadPatients(container, reset) {
     lastVisiblePatient = page.lastVisible;
     canLoadMorePatients = page.hasMore;
 
-    list.innerHTML = renderPatientCards(currentPatients);
+    list.innerHTML = currentPatients.length ? renderPatientCards(currentPatients) : `<div class="p-4 text-sm text-slate-500 text-center">No hay pacientes disponibles.</div>`;
     loadMoreButton.disabled = !canLoadMorePatients;
     loadMoreButton.classList.toggle("opacity-50", !canLoadMorePatients);
     bindPatientCards(container);
   } catch (error) {
-    list.innerHTML = `<div class="p-4 text-sm text-red-600">No fue posible cargar pacientes.</div>`;
+    list.innerHTML = `<div class="p-4 text-sm text-red-600 text-center">No fue posible cargar pacientes.</div>`;
   }
 }
 
@@ -112,31 +336,41 @@ async function searchPatients(container) {
     return;
   }
 
-  list.innerHTML = `<div class="p-4 text-sm text-slate-500">Buscando paciente...</div>`;
+  list.innerHTML = `<div class="p-4 text-sm text-slate-500 text-center">Buscando paciente...</div>`;
   currentPatients = await searchPatientsByDocument(term);
-  list.innerHTML = renderPatientCards(currentPatients);
+  list.innerHTML = currentPatients.length ? renderPatientCards(currentPatients) : `<div class="p-4 text-sm text-slate-500 text-center">No se encontraron pacientes.</div>`;
   loadMoreButton.disabled = true;
   loadMoreButton.classList.add("opacity-50");
   bindPatientCards(container);
 }
 
 function renderPatientCards(patients) {
-  if (!patients.length) {
-    return `<div class="p-4 text-sm text-slate-500">No hay pacientes disponibles.</div>`;
-  }
-
   return patients.map((patient) => `
-    <button data-select-patient="${patient.id}" class="mb-2 w-full rounded-2xl border border-slate-200 p-4 text-left transition hover:border-emerald-300 hover:bg-emerald-50">
-      <strong class="block text-sm text-slate-900">${patient.fullName || "Sin nombre"}</strong>
-      <span class="mt-1 block text-xs text-slate-500">${patient.documentNumber || "Sin documento"}</span>
-      <span class="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">${patient.phone || patient.email || "Sin contacto"}</span>
+    <button data-select-patient="${patient.id}" class="w-full rounded-xl border border-slate-200 p-4 text-left transition hover:border-emerald-300 hover:bg-emerald-50">
+      <div class="flex items-center justify-between">
+        <div>
+          <strong class="block text-sm text-slate-900">${patient.fullName || "Sin nombre"}</strong>
+          <span class="mt-1 block text-xs text-slate-500">${patient.documentNumber || "Sin documento"}</span>
+          <span class="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">${patient.phone || patient.email || "Sin contacto"}</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
     </button>
   `).join("");
 }
 
 function bindPatientCards(container) {
   container.querySelectorAll("[data-select-patient]").forEach((button) => {
-    button.addEventListener("click", async () => selectPatient(container, button.dataset.selectPatient));
+    button.addEventListener("click", async () => {
+      await selectPatient(container, button.dataset.selectPatient);
+      closeSearchModal(container);
+      // Actualizar UI principal
+      container.innerHTML = renderMainView();
+      bindMainEvents(container);
+      await loadRecords(container, true);
+    });
   });
 }
 
@@ -149,17 +383,10 @@ async function selectStoredPatient(container) {
 
   sessionStorage.removeItem("ecoalfa:selectedPatientId");
 
-  if (currentPatients.some((patient) => patient.id === storedPatientId)) {
-    await selectPatient(container, storedPatientId);
-    return;
-  }
-
   const patient = await getPatientById(storedPatientId);
 
   if (patient) {
     currentPatients = [patient, ...currentPatients];
-    container.querySelector("#history-patients-list").innerHTML = renderPatientCards(currentPatients);
-    bindPatientCards(container);
     await selectPatient(container, patient.id);
   }
 }
@@ -168,90 +395,6 @@ async function selectPatient(container, patientId) {
   selectedPatient = currentPatients.find((patient) => patient.id === patientId);
   currentRecords = [];
   lastVisibleRecord = null;
-  renderWorkspace(container);
-  await loadRecords(container, true);
-}
-
-function renderWorkspace(container) {
-  const workspace = container.querySelector("#clinical-workspace");
-
-  if (!selectedPatient) {
-    workspace.innerHTML = renderEmptyWorkspace();
-    return;
-  }
-
-  workspace.innerHTML = `
-    <div class="mb-6 grid gap-4 lg:grid-cols-[1fr_260px]">
-      <div class="rounded-3xl bg-gradient-to-br from-emerald-50 to-sky-50 p-5 ring-1 ring-emerald-100">
-        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">Paciente seleccionado</p>
-        <h3 class="mt-2 text-2xl font-black text-slate-950">${selectedPatient.fullName || "Sin nombre"}</h3>
-        <div class="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-3">
-          <span>Documento: <strong>${selectedPatient.documentNumber || "N/A"}</strong></span>
-          <span>Teléfono: <strong>${selectedPatient.phone || "N/A"}</strong></span>
-          <span>Correo: <strong>${selectedPatient.email || "N/A"}</strong></span>
-        </div>
-      </div>
-      <div class="rounded-3xl bg-slate-950 p-5 text-white">
-        <p class="text-sm text-slate-300">Acciones clínicas</p>
-        <button id="load-more-records" class="mt-4 w-full rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold ring-1 ring-white/10 hover:bg-white/20">Cargar más visitas</button>
-      </div>
-    </div>
-
-    <div class="grid gap-6 xl:grid-cols-[1fr_420px]">
-      <section class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-        <div class="mb-5 flex items-center justify-between">
-          <div>
-            <h3 class="text-lg font-bold text-slate-900">Línea de tiempo clínica</h3>
-            <p class="text-sm text-slate-500">Evoluciones y visitas registradas.</p>
-          </div>
-        </div>
-        <div id="clinical-records-list" class="space-y-4"></div>
-      </section>
-
-      <form id="clinical-record-form" class="rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm">
-        <h3 class="text-lg font-bold text-slate-900">Nueva atención médica</h3>
-        <p class="mt-1 text-sm text-slate-500">Registro por visita con estructura clínica.</p>
-
-        <div class="mt-5 grid gap-3 sm:grid-cols-2">
-          ${renderInput("record-consultationDate", "Fecha", "date", true)}
-          ${renderInput("record-doctorName", "Médico tratante", "text", false)}
-          ${renderInput("record-cie10", "CIE-10", "text", false)}
-          ${renderInput("record-nextControl", "Próximo control", "date", false)}
-        </div>
-
-        <div class="mt-4 space-y-3">
-          ${renderTextarea("record-reason", "Motivo de consulta", true, 2)}
-          ${renderTextarea("record-currentIllness", "Enfermedad actual", true, 3)}
-          ${renderTextarea("record-personalHistory", "Antecedentes relevantes", false, 2)}
-        </div>
-
-        <div class="mt-4 grid gap-3 sm:grid-cols-4">
-          ${renderInput("record-bloodPressure", "TA", "text", false)}
-          ${renderInput("record-heartRate", "FC", "text", false)}
-          ${renderInput("record-temperature", "Temp.", "text", false)}
-          ${renderInput("record-weight", "Peso", "text", false)}
-        </div>
-
-        <div class="mt-4 space-y-3">
-          ${renderTextarea("record-physicalExam", "Examen físico", false, 3)}
-          ${renderTextarea("record-diagnosis", "Diagnóstico", true, 2)}
-          ${renderTextarea("record-treatmentPlan", "Plan de manejo", false, 2)}
-          ${renderTextarea("record-prescription", "Prescripción / fórmula", true, 3)}
-          ${renderTextarea("record-recommendations", "Recomendaciones", false, 2)}
-        </div>
-
-        <p id="clinical-message" class="mt-4 hidden rounded-xl px-4 py-3 text-sm"></p>
-        <button class="mt-4 w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white hover:bg-emerald-800" type="submit">Guardar visita clínica</button>
-      </form>
-    </div>
-  `;
-
-  workspace.querySelector("#clinical-record-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await saveClinicalRecord(container, event.currentTarget);
-  });
-
-  workspace.querySelector("#load-more-records").addEventListener("click", async () => loadRecords(container, false));
 }
 
 async function loadRecords(container, reset) {
@@ -267,7 +410,7 @@ async function loadRecords(container, reset) {
     lastVisibleRecord = null;
   }
 
-  list.innerHTML = `<div class="text-sm text-slate-500">Cargando historia clínica...</div>`;
+  list.innerHTML = `<div class="text-sm text-slate-500 text-center py-4">Cargando historia clínica...</div>`;
 
   try {
     const page = await getClinicalRecords(selectedPatient.id, lastVisibleRecord);
@@ -276,21 +419,23 @@ async function loadRecords(container, reset) {
     canLoadMoreRecords = page.hasMore;
 
     list.innerHTML = renderRecordsList(currentRecords);
-    loadMoreButton.disabled = !canLoadMoreRecords;
-    loadMoreButton.classList.toggle("opacity-50", !canLoadMoreRecords);
+    if (loadMoreButton) {
+      loadMoreButton.disabled = !canLoadMoreRecords;
+      loadMoreButton.classList.toggle("opacity-50", !canLoadMoreRecords);
+    }
     bindPdfButtons();
   } catch (error) {
-    list.innerHTML = `<div class="text-sm text-red-600">No fue posible cargar la historia clínica.</div>`;
+    list.innerHTML = `<div class="text-sm text-red-600 text-center py-4">No fue posible cargar la historia clínica.</div>`;
   }
 }
 
 function renderRecordsList(records) {
   if (!records.length) {
-    return `<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">Sin visitas clínicas registradas.</div>`;
+    return `<div class="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500 text-center">Sin visitas clínicas registradas para este paciente.</div>`;
   }
 
   return records.map((record) => `
-    <article class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <article class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <div class="mb-4 flex flex-col justify-between gap-3 lg:flex-row lg:items-start">
         <div>
           <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">${record.consultationDate || formatDate(record.createdAt)}</span>
@@ -313,7 +458,16 @@ function renderRecordsList(records) {
   `).join("");
 }
 
+function renderRecordField(label, value) {
+  return `<div><dt class="font-semibold text-slate-500">${label}</dt><dd class="mt-1 whitespace-pre-wrap text-slate-800">${value || "Sin información"}</dd></div>`;
+}
+
 async function saveClinicalRecord(container, form) {
+  if (!selectedPatient) {
+    showClinicalMessage(container, "No hay paciente seleccionado.", "error");
+    return;
+  }
+
   try {
     await createClinicalRecord(selectedPatient.id, {
       consultationDate: form.querySelector("#record-consultationDate").value,
@@ -394,10 +548,10 @@ function printRecord(record) {
         </section>
         <h2>Signos vitales</h2>
         <section class="grid">
-          ${pdfField("TA", record.vitalSigns?.bloodPressure)}
-          ${pdfField("FC", record.vitalSigns?.heartRate)}
-          ${pdfField("Temperatura", record.vitalSigns?.temperature)}
-          ${pdfField("Peso", record.vitalSigns?.weight)}
+          ${pdfField("TA", record.bloodPressure)}
+          ${pdfField("FC", record.heartRate)}
+          ${pdfField("Temperatura", record.temperature)}
+          ${pdfField("Peso", record.weight)}
         </section>
         <h2>Evaluación y plan</h2>
         ${pdfBlock("Antecedentes", record.personalHistory)}
@@ -414,38 +568,12 @@ function printRecord(record) {
   printWindow.focus();
 }
 
-function renderInput(id, label, type, required) {
-  return `
-    <div>
-      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="${id}">${label}</label>
-      <input id="${id}" type="${type}" ${required ? "required" : ""} class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-    </div>
-  `;
+function pdfField(label, value) {
+  return `<div class="box"><div class="label">${label}</div>${value || "Sin información"}</div>`;
 }
 
-function renderTextarea(id, label, required, rows) {
-  return `
-    <div>
-      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500" for="${id}">${label}</label>
-      <textarea id="${id}" rows="${rows}" ${required ? "required" : ""} class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
-    </div>
-  `;
-}
-
-function renderRecordField(label, value) {
-  return `<div><dt class="font-semibold text-slate-500">${label}</dt><dd class="mt-1 whitespace-pre-wrap text-slate-800">${value || "Sin información"}</dd></div>`;
-}
-
-function renderEmptyWorkspace() {
-  return `
-    <div class="grid min-h-[640px] place-items-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-      <div class="max-w-md">
-        <div class="mx-auto grid h-20 w-20 place-items-center rounded-full bg-emerald-100 text-3xl">⚕</div>
-        <h3 class="mt-5 text-2xl font-black text-slate-900">Selecciona un paciente</h3>
-        <p class="mt-2 text-slate-500">La historia clínica se gestiona de forma independiente desde este módulo médico.</p>
-      </div>
-    </div>
-  `;
+function pdfBlock(label, value) {
+  return `<div class="box"><div class="label">${label}</div>${value || "Sin información"}</div>`;
 }
 
 function showClinicalMessage(container, message, type) {
@@ -454,14 +582,11 @@ function showClinicalMessage(container, message, type) {
 
   messageBox.className = `mt-4 rounded-xl px-4 py-3 text-sm ${classes}`;
   messageBox.textContent = message;
-}
-
-function pdfField(label, value) {
-  return `<div class="box"><div class="label">${label}</div>${value || "Sin información"}</div>`;
-}
-
-function pdfBlock(label, value) {
-  return `<div class="box"><div class="label">${label}</div>${value || "Sin información"}</div>`;
+  messageBox.classList.remove("hidden");
+  
+  setTimeout(() => {
+    messageBox.classList.add("hidden");
+  }, 3000);
 }
 
 function formatDate(timestamp) {

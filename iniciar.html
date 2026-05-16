@@ -48,6 +48,36 @@
           <button id="seed-button" disabled class="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50" type="button">2. Iniciar / Crear datos de prueba</button>
           <button id="logout-button" class="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50" type="button">Cerrar sesión</button>
         </div>
+
+        <section class="mt-8 rounded-2xl border border-slate-200 p-6">
+          <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+            <div>
+              <h2 class="text-xl font-bold">Ayuda para reglas de Firestore</h2>
+              <p class="mt-2 text-sm text-slate-500">Esta página no puede publicar reglas automáticamente, pero sí te deja copiarlas para pegarlas en Firebase Console.</p>
+            </div>
+            <a class="rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700" href="https://console.firebase.google.com/project/ecoalfa-6f9d1/firestore/rules" target="_blank" rel="noreferrer">Abrir reglas en Firebase</a>
+          </div>
+
+          <div class="mt-6 grid gap-5 lg:grid-cols-2">
+            <div class="rounded-2xl bg-slate-50 p-5">
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="font-semibold">Reglas temporales bootstrap</h3>
+                <button id="copy-bootstrap-rules" class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white" type="button">Copiar</button>
+              </div>
+              <p class="mt-2 text-xs text-slate-500">Úsalas solo para crear el primer admin y datos de prueba.</p>
+              <pre id="bootstrap-rules" class="mt-4 max-h-80 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-950 p-4 text-xs text-slate-100"></pre>
+            </div>
+
+            <div class="rounded-2xl bg-slate-50 p-5">
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="font-semibold">Reglas finales seguras</h3>
+                <button id="copy-final-rules" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white" type="button">Copiar</button>
+              </div>
+              <p class="mt-2 text-xs text-slate-500">Publícalas después de inicializar los datos.</p>
+              <pre id="final-rules" class="mt-4 max-h-80 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-950 p-4 text-xs text-slate-100"></pre>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
 
@@ -87,8 +117,116 @@
       const seedButton = document.querySelector("#seed-button");
       const loginForm = document.querySelector("#login-form");
       const logoutButton = document.querySelector("#logout-button");
+      const bootstrapRules = document.querySelector("#bootstrap-rules");
+      const finalRules = document.querySelector("#final-rules");
+      const copyBootstrapRules = document.querySelector("#copy-bootstrap-rules");
+      const copyFinalRules = document.querySelector("#copy-final-rules");
 
       let currentUser = null;
+
+      const bootstrapRulesText = `rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}`;
+
+      const finalRulesText = `rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function role() {
+      return signedIn() && userProfile().data.active == true ? userProfile().data.role : null;
+    }
+
+    function isAdmin() {
+      return role() == 'admin';
+    }
+
+    function isMedico() {
+      return role() == 'medico';
+    }
+
+    function isOperador() {
+      return role() == 'operador';
+    }
+
+    function isAsesor() {
+      return role() == 'asesor';
+    }
+
+    function canReadIndicators() {
+      return isAdmin() || isAsesor();
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if isAdmin() || isMedico() || isOperador();
+      allow create, update: if isAdmin() || isMedico() || isOperador();
+      allow delete: if isAdmin();
+    }
+
+    match /patients/{patientId} {
+      allow read: if isAdmin() || isMedico();
+      allow create, update: if isAdmin() || isMedico();
+      allow delete: if isAdmin();
+
+      match /clinicalRecords/{recordId} {
+        allow read: if isAdmin() || isMedico();
+        allow create, update: if isAdmin() || isMedico();
+        allow delete: if isAdmin();
+      }
+    }
+
+    match /inventory/{medicineId} {
+      allow read: if isAdmin() || isOperador() || isAsesor();
+      allow create, update: if isAdmin() || isOperador();
+      allow delete: if isAdmin();
+
+      match /movements/{movementId} {
+        allow read: if isAdmin() || isOperador() || isAsesor();
+        allow create: if isAdmin() || isOperador();
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    match /invoices/{invoiceId} {
+      allow read: if isAdmin() || isOperador();
+      allow create: if isAdmin() || isOperador();
+      allow update, delete: if isAdmin();
+    }
+
+    match /indicators/{indicatorId} {
+      allow read: if canReadIndicators();
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}`;
+
+      bootstrapRules.textContent = bootstrapRulesText;
+      finalRules.textContent = finalRulesText;
+
+      copyBootstrapRules.addEventListener("click", () => copyRules("reglas temporales bootstrap", bootstrapRulesText));
+      copyFinalRules.addEventListener("click", () => copyRules("reglas finales seguras", finalRulesText));
 
       function log(message, data = null) {
         const line = `[${new Date().toLocaleTimeString()}] ${message}`;
@@ -103,6 +241,15 @@
           code: error?.code,
           message: error?.message
         });
+      }
+
+      async function copyRules(label, value) {
+        try {
+          await navigator.clipboard.writeText(value);
+          log(`Se copiaron las ${label}. Pégalas en Firebase Console > Firestore Database > Rules.`);
+        } catch (error) {
+          logError(`No se pudieron copiar las ${label}`, error);
+        }
       }
 
       onAuthStateChanged(auth, async (user) => {

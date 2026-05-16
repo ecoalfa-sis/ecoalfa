@@ -73,4 +73,6 @@ Flujo recomendado si Firestore está vacío:
 6. Vuelve a publicar las reglas finales desde `firestore.rules`.
 7. Entra al sistema desde `index.html`.
 
+Desde `iniciar.html` puedes copiar las reglas temporales y finales, y abrir directamente Firebase Console. Por seguridad, una página HTML pública no puede publicar reglas automáticamente.
+
 Importante: no dejes `firestore.bootstrap.rules` publicadas en producción. Solo sirven para arranque inicial y diagnóstico.

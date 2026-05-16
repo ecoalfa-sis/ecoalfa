@@ -245,16 +245,25 @@
         document.querySelector("#register-form").addEventListener("submit", async (event) => {
           event.preventDefault();
           const form = event.currentTarget;
+          const submitButton = form.querySelector("button[type='submit']");
+          submitButton.disabled = true;
+          submitButton.textContent = "Creando usuario...";
 
           try {
             const credential = await createUserWithEmailAndPassword(auth, form.email.value.trim(), form.password.value);
             await createPatientProfile(credential.user.uid, form);
+            showAuthMessage("¡Registro exitoso! Redirigiendo a tu portal...", "success");
+            setTimeout(() => location.reload(), 2000);
           } catch (error) {
             console.error("Registro paciente falló", error);
+            submitButton.disabled = false;
+            submitButton.textContent = "Crear mi usuario de paciente";
             if (error.message === "user-cancelled-link") {
               showAuthMessage("Registro cancelado. Para continuar debes vincular con el paciente existente o contactar al consultorio.", "error");
+            } else if (error.code === "auth/email-already-in-use") {
+              showAuthMessage("Este correo ya está registrado. Intenta iniciar sesión.", "error");
             } else {
-              showAuthMessage("No fue posible crear el usuario. Revisa si el correo ya existe o si las reglas permiten registro.", "error");
+              showAuthMessage("No fue posible crear el usuario. Revisa los datos e intenta de nuevo.", "error");
             }
           }
         });

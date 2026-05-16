@@ -12,7 +12,12 @@ import { db } from "../firebase/config.js";
 const KPI_LIMIT = 50;
 
 export async function getDashboardKpis(role) {
-  const inventory = await getInventorySnapshot();
+  let inventory = { lowStock: [] };
+  try {
+    inventory = await getInventorySnapshot();
+  } catch (error) {
+    console.warn("No se pudo cargar inventario:", error.message);
+  }
 
   if (role !== ROLES.ADMIN) {
     return {

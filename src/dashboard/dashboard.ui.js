@@ -9,8 +9,11 @@ export async function renderDashboardModule(container) {
   try {
     const role = getSession().profile?.role;
     const kpis = await getDashboardKpis(role);
-    container.innerHTML = renderDashboard(kpis);
-    renderIncomeChart(kpis.incomeByDay);
+    const isMobile = detectMobileDevice();
+    container.innerHTML = renderDashboard(kpis, isMobile);
+    if (!isMobile) {
+      renderIncomeChart(kpis.incomeByDay);
+    }
   } catch (error) {
     container.innerHTML = `
       <section class="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
@@ -21,6 +24,10 @@ export async function renderDashboardModule(container) {
   }
 }
 
+function detectMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 function renderLoading() {
   return `
     <section class="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
@@ -29,29 +36,35 @@ function renderLoading() {
   `;
 }
 
-function renderDashboard(kpis) {
+function renderDashboard(kpis, isMobile) {
+  const mobileClass = isMobile ? "text-base" : "";
+  
   return `
-    <section class="space-y-6">
+    <section class="space-y-6 ${mobileClass}">
       <div class="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
         <div>
           <h2 class="text-2xl font-bold text-slate-900">Dashboard</h2>
-          <p class="text-slate-500">Indicadores operativos calculados con consultas limitadas.</p>
+          <p class="text-slate-500">${isMobile ? "Vista adaptada para móvil" : "Indicadores operativos"}</p>
         </div>
-        ${kpis.limited ? `<span class="rounded-full bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">Vista limitada para asesor</span>` : ""}
+        ${kpis.limited ? `<span class="rounded-full bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">Vista limitada</span>` : ""}
       </div>
 
-      <div class="grid gap-4 md:grid-cols-4">
-        ${renderMetricCard("Ingresos diarios", `$${formatCurrency(kpis.dailyIncome)}`, "Facturas recientes")}
-        ${renderMetricCard("Ingresos mensuales", `$${formatCurrency(kpis.monthlyIncome)}`, "Últimas 50 facturas")}
-        ${renderMetricCard("Citas atendidas", kpis.attendedAppointments, "Últimas 50 atendidas")}
-        ${renderMetricCard("Stock bajo", kpis.lowStock.length, "Primeros 50 medicamentos")}
+      <div class="grid gap-4 ${isMobile ? "grid-cols-2" : "md:grid-cols-4"}">
+        ${renderMetricCard("Ingresos hoy", `$${formatCurrency(kpis.dailyIncome)}`, "Diario")}
+        ${renderMetricCard("Ingresos mes", `$${formatCurrency(kpis.monthlyIncome)}`, "Mensual")}
+        ${renderMetricCard("Citas atendidas", kpis.attendedAppointments, "Total")}
+        ${renderMetricCard("Stock bajo", kpis.lowStock.length, "Alertas")}
       </div>
 
-      <div class="grid gap-6 xl:grid-cols-[1fr_380px]">
+      ${renderPendingAppointments(kpis.pendingAppointments)}
+
+      <div class="grid gap-6 ${isMobile ? "grid-cols-1" : "xl:grid-cols-[1fr_380px]"}">
+        ${!isMobile ? `
         <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
           <h3 class="mb-4 text-lg font-semibold text-slate-900">Ingresos últimos 7 días</h3>
           <canvas id="income-chart" height="120"></canvas>
         </div>
+        ` : ""}
 
         <div class="space-y-6">
           <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
@@ -70,6 +83,46 @@ function renderDashboard(kpis) {
         </div>
       </div>
     </section>
+  `;
+}
+
+function renderPendingAppointments(appointments) {
+  if (!appointments || appointments.length === 0) {
+    return `
+      <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+        <h3 class="text-lg font-semibold text-slate-900">Citas de hoy</h3>
+        <p class="mt-2 text-sm text-slate-500">No hay citas pendientes para hoy.</p>
+      </div>
+    `;
+  }
+
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+
+  return `
+    <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-900">Citas pendientes hoy (${appointments.length})</h3>
+        <span class="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">Por atender</span>
+      </div>
+      <div class="mt-4 space-y-2">
+        ${appointments.map((apt) => {
+          const [aptHour, aptMinute] = (apt.time || "00:00").split(":").map(Number);
+          const isPast = aptHour < currentHour || (aptHour === currentHour && aptMinute < currentMinute);
+          const statusColor = isPast ? "bg-red-50 text-red-700 border-red-200" : "bg-blue-50 text-blue-700 border-blue-200";
+          return `
+            <div class="flex items-center justify-between rounded-xl border ${statusColor} px-4 py-3">
+              <div>
+                <strong class="block text-sm font-semibold">${apt.patientName || "Paciente"}</strong>
+                <span class="text-xs">${apt.time || "--:--"} · ${apt.doctorName || "Sin médico"}</span>
+              </div>
+              <span class="rounded-full bg-white px-2 py-1 text-xs font-medium">${apt.status || "Programada"}</span>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
   `;
 }
 

@@ -1,8 +1,11 @@
+import { getSession } from "../auth/session.js";
 import {
   APPOINTMENT_STATUSES,
   createAppointment,
   getAppointmentsByDate,
-  updateAppointment
+  updateAppointment,
+  getPatients,
+  getDoctorsByRole
 } from "./citas.service.js";
 
 let selectedDateKey = getTodayKey();
@@ -12,8 +15,100 @@ let currentAppointments = [];
 
 export async function renderCitasModule(container) {
   container.innerHTML = renderShell();
+  await loadDoctors(container);
   bindAppointmentEvents(container);
+  setupPatientSearch(container);
   await loadAppointments(container, true);
+}
+
+async function loadDoctors(container) {
+  try {
+    const doctors = await getDoctorsByRole();
+    const select = container.querySelector("#doctorId");
+    if (select) {
+      doctors.forEach((doctor) => {
+        const option = document.createElement("option");
+        option.value = doctor.id;
+        option.textContent = doctor.displayName || doctor.email;
+        select.appendChild(option);
+      });
+      
+      select.addEventListener("change", () => {
+        const selected = doctors.find((d) => d.id === select.value);
+        if (selected) {
+          container.querySelector("#doctorName").value = selected.displayName || selected.email;
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error cargando doctores:", error);
+  }
+}
+
+function setupPatientSearch(container) {
+  const searchInput = container.querySelector("#patientSearch");
+  const resultsDiv = container.querySelector("#patient-results");
+  let searchTimeout = null;
+  
+  if (!searchInput || !resultsDiv) return;
+  
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    const term = searchInput.value.trim();
+    
+    if (term.length < 2) {
+      resultsDiv.classList.add("hidden");
+      return;
+    }
+    
+    searchTimeout = setTimeout(async () => {
+      try {
+        const patients = await getPatients(term);
+        renderPatientResults(container, patients, term);
+      } catch (error) {
+        console.error("Error buscando pacientes:", error);
+      }
+    }, 300);
+  });
+  
+  document.addEventListener("click", (e) => {
+    if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+      resultsDiv.classList.add("hidden");
+    }
+  });
+}
+
+function renderPatientResults(container, patients, term) {
+  const resultsDiv = container.querySelector("#patient-results");
+  const selectedDisplay = container.querySelector("#selected-patient");
+  
+  if (patients.length === 0) {
+    resultsDiv.innerHTML = `<div class="p-3 text-sm text-slate-500">No se encontraron pacientes con "${term}"</div>`;
+    resultsDiv.classList.remove("hidden");
+    return;
+  }
+  
+  resultsDiv.innerHTML = patients.map((p) => `
+    <div class="cursor-pointer p-3 hover:bg-slate-50 border-b border-slate-100 last:border-0" data-patient-id="${p.id}" data-patient-name="${p.fullName || "Sin nombre"}">
+      <p class="font-medium text-slate-800">${p.fullName || "Sin nombre"}</p>
+      <p class="text-xs text-slate-500">${p.documentType || "CC"} ${p.documentNumber || ""} · ${p.phone || "Sin teléfono"}</p>
+    </div>
+  `).join("");
+  
+  resultsDiv.classList.remove("hidden");
+  
+  resultsDiv.querySelectorAll("[data-patient-id]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const patientId = el.dataset.patientId;
+      const patientName = el.dataset.patientName;
+      
+      container.querySelector("#patientId").value = patientId;
+      container.querySelector("#patientName").value = patientName;
+      container.querySelector("#patientSearch").value = patientName;
+      selectedDisplay.textContent = `Paciente: ${patientName}`;
+      resultsDiv.classList.add("hidden");
+    });
+  });
 }
 
 function renderShell() {
@@ -25,7 +120,7 @@ function renderShell() {
           <p class="text-slate-500">Agenda diaria optimizada por fecha, hora y estado de atención.</p>
         </div>
         <div class="flex flex-col gap-3 sm:flex-row">
-          <input id="appointments-date" type="date" value="${selectedDateKey}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+          <input id="appointments-date" type="date" value="${selectedDateKey}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
           <button id="refresh-appointments" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Actualizar</button>
         </div>
       </div>
@@ -33,42 +128,51 @@ function renderShell() {
       <div class="grid gap-6 xl:grid-cols-[420px_1fr]">
         <form id="appointment-form" class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
           <h3 class="text-lg font-semibold text-slate-900">Nueva cita</h3>
-          <p class="mt-1 text-sm text-slate-500">Los datos se guardan en appointments con dateKey para consultas eficientes.</p>
+          <p class="mt-1 text-sm text-slate-500">Complete los datos para programar la cita médica.</p>
 
           <input id="appointment-id" type="hidden" />
 
           <div class="mt-5 space-y-4">
             <div>
-              <label class="mb-1 block text-sm font-medium text-slate-700" for="patientName">Paciente</label>
-              <input id="patientName" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+              <label class="mb-1 block text-sm font-medium text-slate-700" for="patientSearch">Buscar paciente</label>
+              <div class="relative">
+                <input id="patientSearch" type="text" placeholder="Escriba para buscar..." class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
+                <div id="patient-results" class="absolute z-10 mt-1 hidden w-full rounded-xl border border-slate-200 bg-white shadow-lg"></div>
+              </div>
+              <input id="patientId" type="hidden" />
+              <input id="patientName" type="hidden" />
+              <p id="selected-patient" class="mt-1 text-sm font-medium text-blue-700"></p>
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-slate-700" for="doctorName">Médico asignado</label>
-              <input id="doctorName" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+              <label class="mb-1 block text-sm font-medium text-slate-700" for="doctorId">Médico asignado</label>
+              <select id="doctorId" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                <option value="">Seleccione un médico</option>
+              </select>
+              <input id="doctorName" type="hidden" />
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
                 <label class="mb-1 block text-sm font-medium text-slate-700" for="dateKey">Fecha</label>
-                <input id="dateKey" type="date" value="${selectedDateKey}" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                <input id="dateKey" type="date" value="${selectedDateKey}" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-slate-700" for="time">Hora</label>
-                <input id="time" type="time" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                <input id="time" type="time" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
               </div>
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-slate-700" for="reason">Motivo de consulta</label>
-              <textarea id="reason" rows="3" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+              <textarea id="reason" rows="3" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></textarea>
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-slate-700" for="status">Estado</label>
-              <select id="status" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+              <select id="status" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                 ${APPOINTMENT_STATUSES.map((status) => `<option value="${status}">${status}</option>`).join("")}
               </select>
             </div>
             <p id="appointments-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
             <div class="grid gap-3 sm:grid-cols-2">
-              <button class="rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800" type="submit">Guardar cita</button>
+              <button class="rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800" type="submit">Guardar cita</button>
               <button id="clear-appointment-form" class="rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50" type="button">Limpiar</button>
             </div>
           </div>
@@ -77,7 +181,7 @@ function renderShell() {
         <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
           <div class="border-b border-slate-200 p-5">
             <h3 class="text-lg font-semibold text-slate-900">Agenda del día</h3>
-            <p class="text-sm text-slate-500">Lectura paginada de máximo 20 citas por carga.</p>
+            <p class="text-sm text-slate-500">Citas programadas para la fecha seleccionada.</p>
           </div>
           <div id="appointments-table" class="overflow-x-auto"></div>
           <div class="border-t border-slate-200 p-4 text-right">
@@ -118,7 +222,7 @@ async function loadAppointments(container, reset) {
   const table = container.querySelector("#appointments-table");
   const loadMoreButton = container.querySelector("#load-more-appointments");
 
-  table.innerHTML = `<div class="p-6 text-sm text-slate-500">Cargando citas...</div>`;
+  table.innerHTML = `<div class="p-6 text-sm text-slate-500"><div class="flex items-center gap-2"><div class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>Cargando citas...</div></div>`;
 
   if (reset) {
     lastVisibleAppointment = null;
@@ -138,10 +242,9 @@ async function loadAppointments(container, reset) {
   } catch (error) {
     console.error("No fue posible cargar las citas", error);
     table.innerHTML = `
-      <div class="space-y-2 p-6 text-sm text-red-700">
+      <div class="p-6 text-sm text-red-700">
         <p class="font-semibold">No fue posible cargar las citas.</p>
-        <p>Código: ${error?.code || "sin-codigo"}</p>
-        <p>Detalle: ${error?.message || "Sin detalle técnico disponible."}</p>
+        <p class="mt-1">Por favor intente nuevamente o contacte al administrador.</p>
       </div>
     `;
   }
@@ -161,6 +264,7 @@ function renderAppointmentsTable(appointments) {
           <th class="px-5 py-3">Médico</th>
           <th class="px-5 py-3">Motivo</th>
           <th class="px-5 py-3">Estado</th>
+          <th class="px-5 py-3">Llegada</th>
           <th class="px-5 py-3 text-right">Acciones</th>
         </tr>
       </thead>
@@ -172,13 +276,22 @@ function renderAppointmentsTable(appointments) {
 }
 
 function renderAppointmentRow(appointment) {
+  const arrivalInfo = appointment.arrivalTime 
+    ? `<span class="text-xs font-medium ${appointment.room ? 'text-blue-600' : 'text-slate-500'}">${appointment.arrivalTime}${appointment.room ? ` · ${appointment.room}` : ''}</span>`
+    : `<span class="text-xs text-slate-400">-</span>`;
+  
+  const modifiedInfo = appointment.lastModifiedBy 
+    ? `<span class="text-xs text-slate-400 block mt-1" title="Modificado por">👤 ${appointment.lastModifiedBy.name || 'Sistema'}</span>`
+    : '';
+  
   return `
     <tr>
       <td class="px-5 py-4 font-semibold text-slate-900">${appointment.time || "--:--"}</td>
       <td class="px-5 py-4 text-slate-700">${appointment.patientName || "Sin paciente"}</td>
       <td class="px-5 py-4 text-slate-600">${appointment.doctorName || "Sin médico"}</td>
       <td class="max-w-xs truncate px-5 py-4 text-slate-600">${appointment.reason || "Sin motivo"}</td>
-      <td class="px-5 py-4">${renderStatusSelect(appointment)}</td>
+      <td class="px-5 py-4">${renderStatusSelect(appointment)}${modifiedInfo}</td>
+      <td class="px-5 py-4">${arrivalInfo}</td>
       <td class="px-5 py-4 text-right">
         <button data-edit-appointment="${appointment.id}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">Editar</button>
       </td>
@@ -195,15 +308,23 @@ function renderStatusSelect(appointment) {
 }
 
 function bindTableEvents(container) {
+  const session = getSession();
+  const currentUser = session.user ? { ...session.user, displayName: session.profile?.displayName } : null;
+  
   container.querySelectorAll("[data-edit-appointment]").forEach((button) => {
     button.addEventListener("click", () => fillAppointmentForm(container, button.dataset.editAppointment));
   });
 
   container.querySelectorAll("[data-status-appointment]").forEach((select) => {
     select.addEventListener("change", async () => {
-      await updateAppointment(select.dataset.statusAppointment, { status: select.value });
-      await loadAppointments(container, true);
-      showMessage(container, "Estado actualizado correctamente.", "success");
+      try {
+        const { updateAppointmentStatus } = await import("./citas.service.js");
+        await updateAppointmentStatus(select.dataset.statusAppointment, select.value, currentUser);
+        await loadAppointments(container, true);
+        showMessage(container, "Estado actualizado. Registrado por: " + (currentUser?.displayName || "Sistema"), "success");
+      } catch (error) {
+        showMessage(container, "No fue posible actualizar el estado.", "error");
+      }
     });
   });
 }
@@ -260,10 +381,10 @@ function resetAppointmentForm(container) {
 
 function showMessage(container, message, type) {
   const messageBox = container.querySelector("#appointments-message");
-  const classes = type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700";
-
+  const classes = type === "success" ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700";
   messageBox.className = `rounded-xl px-4 py-3 text-sm ${classes}`;
   messageBox.textContent = message;
+  messageBox.classList.remove("hidden");
 }
 
 function getTodayKey() {

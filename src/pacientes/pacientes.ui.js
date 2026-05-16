@@ -39,15 +39,15 @@ function renderShell() {
               ${renderInput("birthDate", "Fecha de nacimiento", "date", false)}
               <div>
                 <label class="mb-1 block text-sm font-medium text-slate-700" for="address">Dirección</label>
-                <textarea id="address" rows="2" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                <textarea id="address" rows="2" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></textarea>
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-slate-700" for="background">Notas administrativas</label>
-                <textarea id="background" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                <textarea id="background" rows="3" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></textarea>
               </div>
               <p id="patients-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
               <div class="grid gap-3 sm:grid-cols-2">
-                <button class="rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800" type="submit">Guardar paciente</button>
+                <button class="rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800" type="submit">Guardar paciente</button>
                 <button id="clear-patient-form" class="rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50" type="button">Limpiar</button>
               </div>
             </div>
@@ -62,7 +62,7 @@ function renderShell() {
                 <p class="text-sm text-slate-500">Listado paginado de máximo 15 pacientes por carga.</p>
               </div>
               <div class="flex gap-2">
-                <input id="patient-search" placeholder="Buscar documento" class="w-44 rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                <input id="patient-search" placeholder="Buscar documento" class="w-44 rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
                 <button id="search-patient" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Buscar</button>
                 <button id="refresh-patients" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Todos</button>
               </div>
@@ -74,8 +74,8 @@ function renderShell() {
           </div>
 
           <div class="grid gap-4 md:grid-cols-3">
-            <article class="rounded-2xl bg-emerald-50 p-5 text-emerald-950 ring-1 ring-emerald-100">
-              <p class="text-sm font-medium text-emerald-700">Origen</p>
+            <article class="rounded-2xl bg-blue-50 p-5 text-blue-950 ring-1 ring-blue-100">
+              <p class="text-sm font-medium text-blue-700">Origen</p>
               <strong class="mt-2 block text-2xl">Portal conectado</strong>
               <p class="mt-2 text-sm">Los pacientes inscritos desde citas quedan disponibles en esta base.</p>
             </article>
@@ -100,7 +100,7 @@ function renderInput(id, label, type, required) {
   return `
     <div>
       <label class="mb-1 block text-sm font-medium text-slate-700" for="${id}">${label}</label>
-      <input id="${id}" type="${type}" ${required ? "required" : ""} class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+      <input id="${id}" type="${type}" ${required ? "required" : ""} class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
     </div>
   `;
 }
@@ -188,7 +188,7 @@ function renderPatientsTable(patients) {
 function renderPatientRow(patient) {
   const sourceBadge = getSourceBadge(patient.source);
   const portalStatus = patient.authUid 
-    ? `<span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">Vinculado</span>`
+    ? `<span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">Vinculado</span>`
     : `<span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">Sin vincular</span>`;
   
   return `
@@ -201,7 +201,7 @@ function renderPatientRow(patient) {
       <td class="px-5 py-4 text-right">
         <button data-edit-patient="${patient.id}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">Editar</button>
         ${!patient.authUid ? `<button data-link-patient="${patient.id}" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">Vincular portal</button>` : ""}
-        <a href="#historias" data-open-history="${patient.id}" class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100">Abrir historia</a>
+        <a href="#historias" data-open-history="${patient.id}" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">Abrir historia</a>
       </td>
     </tr>
   `;
@@ -331,7 +331,7 @@ function resetPatientForm(container) {
 
 function showMessage(container, message, type) {
   const messageBox = container.querySelector("#patients-message");
-  const classes = type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700";
+  const classes = type === "success" ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700";
 
   messageBox.className = `rounded-xl px-4 py-3 text-sm ${classes}`;
   messageBox.textContent = message;

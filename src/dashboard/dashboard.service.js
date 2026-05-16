@@ -22,13 +22,15 @@ export async function getDashboardKpis(role) {
       topMedicines: [],
       lowStock: inventory.lowStock,
       incomeByDay: buildEmptyIncomeByDay(),
+      pendingAppointments: [],
       limited: true
     };
   }
 
-  const [invoices, attendedAppointments] = await Promise.all([
+  const [invoices, attendedAppointments, pendingAppointments] = await Promise.all([
     getRecentInvoices(),
-    getAttendedAppointments()
+    getAttendedAppointments(),
+    getPendingAppointmentsToday()
   ]);
 
   return {
@@ -38,6 +40,7 @@ export async function getDashboardKpis(role) {
     topMedicines: getTopMedicines(invoices),
     lowStock: inventory.lowStock,
     incomeByDay: getIncomeByDay(invoices),
+    pendingAppointments,
     limited: false
   };
 }
@@ -61,6 +64,23 @@ async function getAttendedAppointments() {
     collection(db, "appointments"),
     where("status", "==", "Atendida"),
     limit(KPI_LIMIT)
+  );
+  const snapshot = await getDocs(appointmentsQuery);
+
+  return snapshot.docs.map((appointmentDoc) => ({
+    id: appointmentDoc.id,
+    ...appointmentDoc.data()
+  }));
+}
+
+async function getPendingAppointmentsToday() {
+  const today = getTodayKey();
+  const appointmentsQuery = query(
+    collection(db, "appointments"),
+    where("date", "==", today),
+    where("status", "in", ["Programada", "Confirmada", "En espera"]),
+    orderBy("time", "asc"),
+    limit(20)
   );
   const snapshot = await getDocs(appointmentsQuery);
 

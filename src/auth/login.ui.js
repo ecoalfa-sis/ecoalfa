@@ -1,4 +1,4 @@
-import { loginWithEmail } from "../firebase/auth.js";
+import { loginWithEmail, resetPassword } from "../firebase/auth.js";
 
 export function renderLogin(container) {
   container.innerHTML = `
@@ -53,6 +53,11 @@ export function renderLogin(container) {
             <button id="login-button" class="w-full rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60" type="submit">
               Ingresar
             </button>
+            <div class="mt-4 text-center">
+              <button id="forgot-password" type="button" class="text-sm text-blue-600 hover:text-blue-800 underline">
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
           </form>
         </div>
       </section>
@@ -84,6 +89,36 @@ export function renderLogin(container) {
       loginButton.textContent = "Ingresar";
     }
   });
+
+  const forgotPasswordBtn = document.querySelector("#forgot-password");
+  forgotPasswordBtn.addEventListener("click", async () => {
+    const email = form.email.value.trim();
+    if (!email) {
+      errorBox.textContent = "Por favor ingresa tu correo electrónico para recuperar la contraseña.";
+      errorBox.classList.remove("hidden");
+      return;
+    }
+    
+    try {
+      await resetPassword(email);
+      errorBox.className = "rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-700";
+      errorBox.textContent = "Se ha enviado un enlace de recuperación a tu correo. Revisa tu bandeja de entrada.";
+      errorBox.classList.remove("hidden");
+    } catch (error) {
+      errorBox.textContent = getResetPasswordErrorMessage(error);
+      errorBox.classList.remove("hidden");
+    }
+  });
+}
+
+function getResetPasswordErrorMessage(error) {
+  const messages = {
+    "auth/invalid-email": "El correo no tiene un formato válido.",
+    "auth/user-not-found": "No existe un usuario con este correo.",
+    "auth/too-many-requests": "Demasiados intentos. Intenta más tarde.",
+    "auth/network-request-failed": "Error de conexión. Revisa tu internet."
+  };
+  return messages[error.code] || "No fue posible enviar el enlace de recuperación. Intenta de nuevo.";
 }
 
 function initInternalLoginCanvas() {

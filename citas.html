@@ -17,7 +17,8 @@
         getAuth,
         onAuthStateChanged,
         signInWithEmailAndPassword,
-        signOut
+        signOut,
+        sendPasswordResetEmail
       } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
       import {
         addDoc,
@@ -207,6 +208,9 @@
             <label class="block text-sm font-medium">Contraseña<input id="login-password" type="password" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
             <p id="auth-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
             <button class="w-full rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white" type="submit">Entrar a mi portal</button>
+            <div class="text-center">
+              <button id="forgot-password" type="button" class="text-sm text-blue-600 hover:text-blue-800 underline">¿Olvidaste tu contraseña?</button>
+            </div>
           </form>
         `;
 
@@ -217,6 +221,21 @@
           } catch (error) {
             console.error("Login paciente falló", error);
             showAuthMessage("No fue posible ingresar. Verifica correo y contraseña.", "error");
+          }
+        });
+
+        document.querySelector("#forgot-password").addEventListener("click", async () => {
+          const email = document.querySelector("#login-email").value.trim();
+          if (!email) {
+            showAuthMessage("Por favor ingresa tu correo electrónico.", "error");
+            return;
+          }
+          try {
+            await sendPasswordResetEmail(auth, email);
+            showAuthMessage("Se ha enviado un enlace de recuperación a tu correo. Revisa tu bandeja de entrada.", "success");
+          } catch (error) {
+            console.error("Error enviando reset:", error);
+            showAuthMessage("No fue posible enviar el enlace. Verifica el correo e intenta de nuevo.", "error");
           }
         });
       }
@@ -500,33 +519,37 @@
         const patientSnap = await getDoc(doc(db, "patients", user.uid));
         if (patientSnap.exists()) {
           const data = patientSnap.data();
+          
           if (data.mergedInto) {
             const mainPatientSnap = await getDoc(doc(db, "patients", data.mergedInto));
             if (mainPatientSnap.exists()) {
-              console.log("Perfil encontrado via mergedInto:", mainPatientSnap.id);
-              return { id: mainPatientSnap.id, ...mainPatientSnap.data() };
+              const mainData = mainPatientSnap.data();
+              if (mainData.authUid === user.uid) {
+                console.log("Perfil vinculado encontrado:", mainPatientSnap.id);
+                return { id: mainPatientSnap.id, ...mainData };
+              }
             }
+            console.log("Documento shadow sin referencia válida");
+            throw new Error("patient-profile-not-found");
           }
-          if (data.authUid || data.source === "patient_portal") {
+          
+          if (data.authUid === user.uid) {
             console.log("Perfil encontrado directo:", patientSnap.id);
             return { id: patientSnap.id, ...data };
           }
         }
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         const q = query(collection(db, "patients"), where("authUid", "==", user.uid), limit(1));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
           const docSnap = snapshot.docs[0];
           const data = docSnap.data();
-          if (data.mergedInto) {
-            const mainPatientSnap = await getDoc(doc(db, "patients", data.mergedInto));
-            if (mainPatientSnap.exists()) {
-              console.log("Perfil encontrado via authUid query + mergedInto:", mainPatientSnap.id);
-              return { id: mainPatientSnap.id, ...mainPatientSnap.data() };
-            }
+          if (data.authUid === user.uid) {
+            console.log("Perfil encontrado via query:", docSnap.id);
+            return { id: docSnap.id, ...data };
           }
-          console.log("Perfil encontrado via authUid query:", docSnap.id);
-          return { id: docSnap.id, ...data };
         }
         
         if (attempt < 3) {

@@ -1,9 +1,10 @@
 import { ROLE_LABELS, ROLES } from "../auth/roles.js";
-import { getUsersPage, updateUserProfile, upsertUserProfile } from "./usuarios.service.js";
+import { createUserWithProfile, getUsersPage, updateUserProfile, upsertUserProfile } from "./usuarios.service.js";
 
 let lastVisibleUser = null;
 let canLoadMoreUsers = false;
 let currentUsers = [];
+let editingUserId = null;
 
 export async function renderUsuariosModule(container) {
   container.innerHTML = renderShell();
@@ -24,21 +25,27 @@ function renderShell() {
 
       <div class="grid gap-6 xl:grid-cols-[420px_1fr]">
         <form id="user-profile-form" class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <h3 class="text-lg font-semibold text-slate-900">Crear/actualizar perfil</h3>
-          <p class="mt-1 text-sm text-slate-500">El UID debe existir en Firebase Authentication.</p>
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 id="form-title" class="text-lg font-semibold text-slate-900">Nuevo usuario</h3>
+              <p id="form-subtitle" class="mt-1 text-sm text-slate-500">Se creará la cuenta en Firebase Authentication automáticamente.</p>
+            </div>
+            <button id="cancel-edit" type="button" class="hidden rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
+          </div>
 
           <div class="mt-5 space-y-4">
             <div>
-              <label class="mb-1 block text-sm font-medium text-slate-700" for="uid">UID Auth</label>
-              <input id="uid" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium text-slate-700" for="displayName">Nombre</label>
+              <label class="mb-1 block text-sm font-medium text-slate-700" for="displayName">Nombre completo</label>
               <input id="displayName" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-slate-700" for="email">Correo</label>
+              <label class="mb-1 block text-sm font-medium text-slate-700" for="email">Correo electrónico</label>
               <input id="email" type="email" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+            </div>
+            <div id="password-field">
+              <label class="mb-1 block text-sm font-medium text-slate-700" for="password">Contraseña temporal</label>
+              <input id="password" type="password" minlength="6" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" placeholder="Mínimo 6 caracteres" />
+              <p class="mt-1 text-xs text-slate-400">El usuario podrá cambiarla desde su primer ingreso.</p>
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-slate-700" for="role">Rol</label>
@@ -51,7 +58,7 @@ function renderShell() {
               Usuario activo
             </label>
             <p id="users-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
-            <button class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800" type="submit">Guardar perfil</button>
+            <button id="submit-btn" class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800" type="submit">Crear usuario</button>
           </div>
         </form>
 
@@ -74,6 +81,10 @@ function bindUserEvents(container) {
   container.querySelector("#user-profile-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     await saveProfile(container, event.currentTarget);
+  });
+
+  container.querySelector("#cancel-edit").addEventListener("click", () => {
+    resetForm(container);
   });
 
   container.querySelector("#refresh-users").addEventListener("click", async () => {
@@ -167,28 +178,74 @@ function fillForm(container, uid) {
   const user = currentUsers.find((item) => item.id === uid);
   const form = container.querySelector("#user-profile-form");
 
-  form.uid.value = user.id;
+  editingUserId = uid;
   form.displayName.value = user.displayName || "";
   form.email.value = user.email || "";
   form.role.value = user.role || ROLES.ASESOR;
   form.active.checked = user.active !== false;
+
+  container.querySelector("#form-title").textContent = "Editar usuario";
+  container.querySelector("#form-subtitle").textContent = `Editando: ${user.displayName || user.email}`;
+  container.querySelector("#password-field").classList.add("hidden");
+  container.querySelector("#password").removeAttribute("required");
+  container.querySelector("#submit-btn").textContent = "Guardar cambios";
+  container.querySelector("#cancel-edit").classList.remove("hidden");
+
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetForm(container) {
+  const form = container.querySelector("#user-profile-form");
+  editingUserId = null;
+  form.reset();
+  form.active.checked = true;
+  container.querySelector("#form-title").textContent = "Nuevo usuario";
+  container.querySelector("#form-subtitle").textContent = "Se creará la cuenta en Firebase Authentication automáticamente.";
+  container.querySelector("#password-field").classList.remove("hidden");
+  container.querySelector("#password").setAttribute("required", "");
+  container.querySelector("#submit-btn").textContent = "Crear usuario";
+  container.querySelector("#cancel-edit").classList.add("hidden");
 }
 
 async function saveProfile(container, form) {
+  const submitBtn = container.querySelector("#submit-btn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = editingUserId ? "Guardando..." : "Creando usuario...";
+
   try {
-    await upsertUserProfile(form.uid.value.trim(), {
-      displayName: form.displayName.value,
-      email: form.email.value,
+    const profile = {
+      displayName: form.displayName.value.trim(),
+      email: form.email.value.trim(),
       role: form.role.value,
       active: form.active.checked
-    });
+    };
 
-    form.reset();
-    form.active.checked = true;
+    if (editingUserId) {
+      await upsertUserProfile(editingUserId, profile);
+      showMessage(container, "Usuario actualizado correctamente.", "success");
+    } else {
+      const password = form.password.value;
+      if (!password || password.length < 6) {
+        showMessage(container, "La contraseña debe tener al menos 6 caracteres.", "error");
+        return;
+      }
+      await createUserWithProfile({ ...profile, password });
+      showMessage(container, `Usuario ${profile.displayName} creado exitosamente.`, "success");
+    }
+
+    resetForm(container);
     await loadUsers(container, true);
-    showMessage(container, "Perfil guardado correctamente.", "success");
   } catch (error) {
-    showMessage(container, "No fue posible guardar el perfil. Verifica permisos y reglas.", "error");
+    console.error("Error guardando usuario:", error);
+    const msg = error.code === "auth/email-already-in-use"
+      ? "Este correo ya tiene una cuenta en Firebase Authentication."
+      : error.code === "auth/weak-password"
+        ? "La contraseña es muy débil. Usa al menos 6 caracteres."
+        : "No fue posible guardar el usuario. Verifica permisos y datos.";
+    showMessage(container, msg, "error");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = editingUserId ? "Guardar cambios" : "Crear usuario";
   }
 }
 

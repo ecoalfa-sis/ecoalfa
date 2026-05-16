@@ -30,30 +30,45 @@ service cloud.firestore {
       return role() == 'asesor';
     }
 
+    function hasFullAccess() {
+      return isAdmin() || isMedico();
+    }
+
     function canReadIndicators() {
       return isAdmin() || isAsesor();
     }
 
     match /users/{userId} {
-      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow read: if signedIn() && (request.auth.uid == userId || hasFullAccess());
       allow create, update, delete: if isAdmin();
     }
 
+    match /publicAppointmentRequests/{requestId} {
+      allow create: if signedIn();
+      allow read, update, delete: if hasFullAccess() || isOperador();
+    }
+
+    match /doctors/{doctorId} {
+      allow read: if signedIn();
+      allow create, update, delete: if hasFullAccess();
+    }
+
     match /appointments/{appointmentId} {
-      allow read: if isAdmin() || isMedico() || isOperador();
-      allow create, update: if isAdmin() || isMedico() || isOperador();
-      allow delete: if isAdmin();
+      allow read: if hasFullAccess() || isOperador() || (signedIn() && resource.data.authUid == request.auth.uid);
+      allow create, update: if hasFullAccess() || isOperador();
+      allow delete: if hasFullAccess();
     }
 
     match /patients/{patientId} {
-      allow read: if isAdmin() || isMedico();
-      allow create, update: if isAdmin() || isMedico();
-      allow delete: if isAdmin();
+      allow read: if hasFullAccess() || (signedIn() && resource.data.authUid == request.auth.uid);
+      allow create: if hasFullAccess() || (signedIn() && request.resource.data.authUid == request.auth.uid);
+      allow update: if hasFullAccess() || (signedIn() && resource.data.authUid == request.auth.uid);
+      allow delete: if hasFullAccess();
 
       match /clinicalRecords/{recordId} {
-        allow read: if isAdmin() || isMedico();
-        allow create, update: if isAdmin() || isMedico();
-        allow delete: if isAdmin();
+        allow read: if hasFullAccess() || (signedIn() && get(/databases/$(database)/documents/patients/$(patientId)).data.authUid == request.auth.uid);
+        allow create, update: if hasFullAccess();
+        allow delete: if hasFullAccess();
       }
     }
 
@@ -70,9 +85,9 @@ service cloud.firestore {
     }
 
     match /invoices/{invoiceId} {
-      allow read: if isAdmin() || isOperador();
-      allow create: if isAdmin() || isOperador();
-      allow update, delete: if isAdmin();
+      allow read: if hasFullAccess() || isOperador() || (signedIn() && resource.data.authUid == request.auth.uid);
+      allow create: if hasFullAccess() || isOperador();
+      allow update, delete: if hasFullAccess();
     }
 
     match /indicators/{indicatorId} {

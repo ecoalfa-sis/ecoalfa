@@ -34,11 +34,25 @@ function renderShell() {
             <h3 class="text-lg font-semibold text-slate-900">Datos del paciente</h3>
             <input id="patient-id" type="hidden" />
             <div class="mt-5 space-y-4">
-              ${renderInput("fullName", "Nombre completo", "text", true)}
-              ${renderInput("documentNumber", "Documento", "text", true)}
-              ${renderInput("phone", "Teléfono", "tel", false)}
-              ${renderInput("email", "Correo", "email", false)}
-              ${renderInput("birthDate", "Fecha de nacimiento", "date", false)}
+              <div class="grid gap-4 sm:grid-cols-2">
+                ${renderSelect("documentType", "Tipo de documento", ["CC", "TI", "CE", "PA", "RC", "Otro"])}
+                ${renderInput("documentNumber", "Número de documento", "text", true)}
+                ${renderInput("firstName", "Primer nombre", "text", true)}
+                ${renderInput("secondName", "Segundo nombre", "text", false)}
+                ${renderInput("firstLastName", "Primer apellido", "text", true)}
+                ${renderInput("secondLastName", "Segundo apellido", "text", false)}
+                ${renderInput("email", "Correo", "email", false)}
+                ${renderInput("phone", "Celular", "tel", false)}
+                ${renderInput("birthDate", "Fecha de nacimiento", "date", false)}
+                ${renderSelect("gender", "Género", ["Hombre", "Mujer", "Otro", "Prefiero no decirlo"])}
+                ${renderInput("neighborhood", "Barrio", "text", false)}
+                ${renderInput("municipality", "Municipio", "text", false)}
+                ${renderInput("eps", "EPS", "text", false)}
+                ${renderSelect("bloodType", "Grupo sanguíneo", ["", "O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"])}
+                ${renderInput("occupation", "Ocupación", "text", false)}
+                ${renderInput("emergencyContactName", "Contacto de emergencia", "text", false)}
+                ${renderInput("emergencyContactPhone", "Teléfono emergencia", "tel", false)}
+              </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-slate-700" for="address">Dirección</label>
                 <textarea id="address" rows="2" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
@@ -89,6 +103,17 @@ function renderInput(id, label, type, required) {
     <div>
       <label class="mb-1 block text-sm font-medium text-slate-700" for="${id}">${label}</label>
       <input id="${id}" type="${type}" ${required ? "required" : ""} class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+    </div>
+  `;
+}
+
+function renderSelect(id, label, options) {
+  return `
+    <div>
+      <label class="mb-1 block text-sm font-medium text-slate-700" for="${id}">${label}</label>
+      <select id="${id}" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+        ${options.map((option) => `<option value="${option}">${option || "Selecciona"}</option>`).join("")}
+      </select>
     </div>
   `;
 }
@@ -200,11 +225,23 @@ function fillPatientForm(container, patientId) {
   const form = container.querySelector("#patient-form");
 
   form.querySelector("#patient-id").value = patient.id;
-  form.fullName.value = patient.fullName || "";
+  form.documentType.value = patient.documentType || "CC";
   form.documentNumber.value = patient.documentNumber || "";
+  form.firstName.value = patient.firstName || "";
+  form.secondName.value = patient.secondName || "";
+  form.firstLastName.value = patient.firstLastName || "";
+  form.secondLastName.value = patient.secondLastName || "";
   form.phone.value = patient.phone || "";
   form.email.value = patient.email || "";
   form.birthDate.value = patient.birthDate || "";
+  form.gender.value = patient.gender || "Prefiero no decirlo";
+  form.neighborhood.value = patient.neighborhood || "";
+  form.municipality.value = patient.municipality || "";
+  form.eps.value = patient.eps || "";
+  form.bloodType.value = patient.bloodType || "";
+  form.occupation.value = patient.occupation || "";
+  form.emergencyContactName.value = patient.emergencyContactName || "";
+  form.emergencyContactPhone.value = patient.emergencyContactPhone || "";
   form.address.value = patient.address || "";
   form.background.value = patient.background || "";
 }
@@ -212,11 +249,23 @@ function fillPatientForm(container, patientId) {
 async function savePatient(container, form) {
   try {
     const patientId = await upsertPatient(form.querySelector("#patient-id").value, {
-      fullName: form.fullName.value,
+      documentType: form.documentType.value,
       documentNumber: form.documentNumber.value,
+      firstName: form.firstName.value,
+      secondName: form.secondName.value,
+      firstLastName: form.firstLastName.value,
+      secondLastName: form.secondLastName.value,
       phone: form.phone.value,
       email: form.email.value,
       birthDate: form.birthDate.value,
+      gender: form.gender.value,
+      neighborhood: form.neighborhood.value,
+      municipality: form.municipality.value,
+      eps: form.eps.value,
+      bloodType: form.bloodType.value,
+      occupation: form.occupation.value,
+      emergencyContactName: form.emergencyContactName.value,
+      emergencyContactPhone: form.emergencyContactPhone.value,
       address: form.address.value,
       background: form.background.value
     });
@@ -271,11 +320,26 @@ function renderClinicalPanel(container) {
       <div class="mt-4 grid gap-4 lg:grid-cols-2">
         ${renderTextarea("record-reason", "Motivo", true)}
         ${renderTextarea("record-currentIllness", "Enfermedad actual", true)}
+        ${renderTextarea("record-personalHistory", "Antecedentes personales", false)}
+        ${renderTextarea("record-familyHistory", "Antecedentes familiares", false)}
+        ${renderTextarea("record-allergies", "Alergias", false)}
+        ${renderTextarea("record-currentMedications", "Medicamentos actuales", false)}
+        ${renderTextarea("record-physicalExam", "Examen físico", false)}
         ${renderTextarea("record-systemsReview", "Revisión por sistemas", false)}
         ${renderTextarea("record-diagnosis", "Diagnóstico", true)}
+        ${renderInput("record-cie10", "CIE-10", "text", false)}
+      </div>
+      <div class="mt-4 grid gap-4 lg:grid-cols-4">
+        ${renderInput("record-bloodPressure", "Tensión arterial", "text", false)}
+        ${renderInput("record-heartRate", "Frecuencia cardíaca", "text", false)}
+        ${renderInput("record-temperature", "Temperatura", "text", false)}
+        ${renderInput("record-weight", "Peso", "text", false)}
       </div>
       <div class="mt-4">
+        ${renderTextarea("record-treatmentPlan", "Plan de manejo", false)}
         ${renderTextarea("record-prescription", "Prescripción / Fórmula médica", true)}
+        ${renderTextarea("record-recommendations", "Recomendaciones", false)}
+        ${renderTextarea("record-followUp", "Seguimiento", false)}
       </div>
       <button class="mt-4 rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800" type="submit">Guardar consulta</button>
     </form>
@@ -343,8 +407,16 @@ function renderRecordsList(records) {
       <dl class="grid gap-3 text-sm lg:grid-cols-2">
         ${renderRecordField("Motivo", record.reason)}
         ${renderRecordField("Enfermedad actual", record.currentIllness)}
+        ${renderRecordField("Antecedentes personales", record.personalHistory)}
+        ${renderRecordField("Antecedentes familiares", record.familyHistory)}
+        ${renderRecordField("Alergias", record.allergies)}
+        ${renderRecordField("Medicamentos actuales", record.currentMedications)}
+        ${renderRecordField("Signos vitales", renderVitalSigns(record.vitalSigns))}
+        ${renderRecordField("Examen físico", record.physicalExam)}
         ${renderRecordField("Revisión por sistemas", record.systemsReview)}
         ${renderRecordField("Diagnóstico", record.diagnosis)}
+        ${renderRecordField("CIE-10", record.cie10)}
+        ${renderRecordField("Plan de manejo", record.treatmentPlan)}
       </dl>
       <div class="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900">
         <strong class="block text-emerald-950">Prescripción / Fórmula médica</strong>
@@ -363,14 +435,39 @@ function renderRecordField(label, value) {
   `;
 }
 
+function renderVitalSigns(vitalSigns = {}) {
+  return [
+    vitalSigns.bloodPressure ? `TA: ${vitalSigns.bloodPressure}` : "",
+    vitalSigns.heartRate ? `FC: ${vitalSigns.heartRate}` : "",
+    vitalSigns.respiratoryRate ? `FR: ${vitalSigns.respiratoryRate}` : "",
+    vitalSigns.temperature ? `Temp: ${vitalSigns.temperature}` : "",
+    vitalSigns.oxygenSaturation ? `SatO2: ${vitalSigns.oxygenSaturation}` : "",
+    vitalSigns.weight ? `Peso: ${vitalSigns.weight}` : "",
+    vitalSigns.height ? `Talla: ${vitalSigns.height}` : ""
+  ].filter(Boolean).join(" · ");
+}
+
 async function saveClinicalRecord(container, form) {
   try {
     await createClinicalRecord(selectedPatient.id, {
       reason: form.querySelector("#record-reason").value,
       currentIllness: form.querySelector("#record-currentIllness").value,
+      personalHistory: form.querySelector("#record-personalHistory").value,
+      familyHistory: form.querySelector("#record-familyHistory").value,
+      allergies: form.querySelector("#record-allergies").value,
+      currentMedications: form.querySelector("#record-currentMedications").value,
+      physicalExam: form.querySelector("#record-physicalExam").value,
       systemsReview: form.querySelector("#record-systemsReview").value,
       diagnosis: form.querySelector("#record-diagnosis").value,
-      prescription: form.querySelector("#record-prescription").value
+      cie10: form.querySelector("#record-cie10").value,
+      bloodPressure: form.querySelector("#record-bloodPressure").value,
+      heartRate: form.querySelector("#record-heartRate").value,
+      temperature: form.querySelector("#record-temperature").value,
+      weight: form.querySelector("#record-weight").value,
+      treatmentPlan: form.querySelector("#record-treatmentPlan").value,
+      prescription: form.querySelector("#record-prescription").value,
+      recommendations: form.querySelector("#record-recommendations").value,
+      followUp: form.querySelector("#record-followUp").value
     });
 
     form.reset();

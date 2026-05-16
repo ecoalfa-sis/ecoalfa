@@ -22,6 +22,10 @@ service cloud.firestore {
       return role() == 'medico';
     }
 
+    function isFullAccess() {
+      return isAdmin() || isMedico();
+    }
+
     function isOperador() {
       return role() == 'operador';
     }
@@ -31,53 +35,63 @@ service cloud.firestore {
     }
 
     function canReadIndicators() {
-      return isAdmin() || isAsesor();
+      return isFullAccess() || isOperador();
     }
 
     match /users/{userId} {
-      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
-      allow create, update, delete: if isAdmin();
+      allow read: if signedIn() && (request.auth.uid == userId || isFullAccess());
+      allow create, update, delete: if isFullAccess();
     }
 
     match /appointments/{appointmentId} {
-      allow read: if isAdmin() || isMedico() || isOperador();
-      allow create, update: if isAdmin() || isMedico() || isOperador();
-      allow delete: if isAdmin();
+      allow read: if isFullAccess() || isOperador();
+      allow create, update: if isFullAccess() || isOperador();
+      allow delete: if isFullAccess();
+    }
+
+    match /publicAppointmentRequests/{requestId} {
+      allow create: if true;
+      allow read, update, delete: if isFullAccess() || isOperador();
+    }
+
+    match /doctors/{doctorId} {
+      allow read: if isFullAccess() || isOperador();
+      allow create, update, delete: if isFullAccess();
     }
 
     match /patients/{patientId} {
-      allow read: if isAdmin() || isMedico();
-      allow create, update: if isAdmin() || isMedico();
-      allow delete: if isAdmin();
+      allow read: if isFullAccess();
+      allow create, update: if isFullAccess();
+      allow delete: if isFullAccess();
 
       match /clinicalRecords/{recordId} {
-        allow read: if isAdmin() || isMedico();
-        allow create, update: if isAdmin() || isMedico();
-        allow delete: if isAdmin();
+        allow read: if isFullAccess();
+        allow create, update: if isFullAccess();
+        allow delete: if isFullAccess();
       }
     }
 
     match /inventory/{medicineId} {
-      allow read: if isAdmin() || isOperador() || isAsesor();
-      allow create, update: if isAdmin() || isOperador();
-      allow delete: if isAdmin();
+      allow read: if isFullAccess() || isOperador();
+      allow create, update: if isFullAccess() || isOperador();
+      allow delete: if isFullAccess();
 
       match /movements/{movementId} {
-        allow read: if isAdmin() || isOperador() || isAsesor();
-        allow create: if isAdmin() || isOperador();
-        allow update, delete: if isAdmin();
+        allow read: if isFullAccess() || isOperador();
+        allow create: if isFullAccess() || isOperador();
+        allow update, delete: if isFullAccess();
       }
     }
 
     match /invoices/{invoiceId} {
-      allow read: if isAdmin() || isOperador();
-      allow create: if isAdmin() || isOperador();
-      allow update, delete: if isAdmin();
+      allow read: if isFullAccess() || isOperador();
+      allow create: if isFullAccess() || isOperador();
+      allow update, delete: if isFullAccess();
     }
 
     match /indicators/{indicatorId} {
       allow read: if canReadIndicators();
-      allow write: if isAdmin();
+      allow write: if isFullAccess();
     }
 
     match /{document=**} {

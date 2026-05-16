@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agendar cita | Ecoalfa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-100 text-slate-900">
+    <main class="mx-auto max-w-5xl p-6">
+      <section class="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+          <div>
+            <h1 class="text-3xl font-bold">Agendar cita</h1>
+            <p class="mt-2 text-slate-500">Registra tus datos para solicitar una cita en Ecoalfa.</p>
+          </div>
+          <a class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" href="./index.html">Ingreso interno</a>
+        </div>
+
+        <form id="appointment-request-form" class="mt-8 space-y-6">
+          <div class="rounded-2xl bg-slate-50 p-6">
+            <h2 class="text-xl font-semibold">Datos personales</h2>
+            <div class="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <label class="block text-sm font-medium">Tipo de documento<select id="documentType" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3"><option value="CC">Cédula de ciudadanía</option><option value="TI">Tarjeta de identidad</option><option value="CE">Cédula de extranjería</option><option value="PA">Pasaporte</option><option value="RC">Registro civil</option><option value="Otro">Otro</option></select></label>
+              <label class="block text-sm font-medium">Número de documento<input id="documentNumber" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Primer nombre<input id="firstName" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Segundo nombre<input id="secondName" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Primer apellido<input id="firstLastName" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Segundo apellido<input id="secondLastName" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Correo electrónico<input id="email" type="email" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Celular<input id="phone" type="tel" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Dirección<input id="address" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Barrio<input id="neighborhood" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Municipio<input id="municipality" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Género<select id="gender" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3"><option value="Hombre">Hombre</option><option value="Mujer">Mujer</option><option value="Otro">Otro</option><option value="Prefiero no decirlo">Prefiero no decirlo</option></select></label>
+              <label id="custom-gender-wrapper" class="hidden text-sm font-medium">Especificar género<input id="customGender" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-slate-50 p-6">
+            <h2 class="text-xl font-semibold">Datos de la cita</h2>
+            <div class="mt-5 grid gap-4 md:grid-cols-2">
+              <label class="block text-sm font-medium">Fecha solicitada<input id="dateKey" type="date" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium">Hora solicitada<input id="time" type="time" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
+              <label class="block text-sm font-medium md:col-span-2">Motivo de consulta<textarea id="reason" rows="4" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3"></textarea></label>
+            </div>
+          </div>
+
+          <p id="message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
+          <button id="submit-button" class="rounded-xl bg-emerald-700 px-6 py-3 font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60" type="submit">Enviar solicitud</button>
+        </form>
+      </section>
+    </main>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+      import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBs85ZtM0tUI5XYypWTze-8xfPJj3EaV5g",
+        authDomain: "ecoalfa-6f9d1.firebaseapp.com",
+        projectId: "ecoalfa-6f9d1",
+        storageBucket: "ecoalfa-6f9d1.firebasestorage.app",
+        messagingSenderId: "760816764581",
+        appId: "1:760816764581:web:31ef204b23ca5980852f4c",
+        measurementId: "G-77WWNZFNY6"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const form = document.querySelector("#appointment-request-form");
+      const message = document.querySelector("#message");
+      const submitButton = document.querySelector("#submit-button");
+      const gender = document.querySelector("#gender");
+      const customGenderWrapper = document.querySelector("#custom-gender-wrapper");
+
+      gender.addEventListener("change", () => {
+        customGenderWrapper.classList.toggle("hidden", gender.value !== "Otro");
+      });
+
+      form.dateKey.value = new Date().toISOString().slice(0, 10);
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        submitButton.disabled = true;
+        submitButton.textContent = "Enviando...";
+        message.classList.add("hidden");
+
+        const firstName = form.firstName.value.trim();
+        const secondName = form.secondName.value.trim();
+        const firstLastName = form.firstLastName.value.trim();
+        const secondLastName = form.secondLastName.value.trim();
+        const fullName = [firstName, secondName, firstLastName, secondLastName].filter(Boolean).join(" ");
+
+        try {
+          await addDoc(collection(db, "publicAppointmentRequests"), {
+            documentType: form.documentType.value,
+            documentNumber: form.documentNumber.value.trim(),
+            firstName,
+            secondName,
+            firstLastName,
+            secondLastName,
+            fullName,
+            email: form.email.value.trim().toLowerCase(),
+            phone: form.phone.value.trim(),
+            address: form.address.value.trim(),
+            neighborhood: form.neighborhood.value.trim(),
+            municipality: form.municipality.value.trim(),
+            gender: form.gender.value === "Otro" ? form.customGender.value.trim() || "Otro" : form.gender.value,
+            requestedDateKey: form.dateKey.value,
+            requestedTime: form.time.value,
+            reason: form.reason.value.trim(),
+            status: "Pendiente",
+            source: "public-web",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+
+          form.reset();
+          form.dateKey.value = new Date().toISOString().slice(0, 10);
+          showMessage("Solicitud enviada correctamente. Ecoalfa te contactará para confirmar la cita.", "success");
+        } catch (error) {
+          console.error("No fue posible enviar la solicitud", error);
+          showMessage(`No fue posible enviar la solicitud. Código: ${error.code || "desconocido"}`, "error");
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = "Enviar solicitud";
+        }
+      });
+
+      function showMessage(text, type) {
+        message.className = `rounded-xl px-4 py-3 text-sm ${type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`;
+        message.textContent = text;
+      }
+    </script>
+  </body>
+</html>

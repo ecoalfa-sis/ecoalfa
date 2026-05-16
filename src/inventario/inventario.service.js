@@ -46,10 +46,20 @@ export async function getInventoryPage(lastVisible = null) {
 export async function upsertMedicine(medicineId, medicine) {
   const payload = {
     name: medicine.name.trim(),
+    activeIngredient: medicine.activeIngredient?.trim() || "",
+    sanitaryRegistry: medicine.sanitaryRegistry?.trim() || "",
+    laboratory: medicine.laboratory?.trim() || "",
+    lot: medicine.lot?.trim() || "",
+    expirationDate: medicine.expirationDate || "",
     potency: medicine.potency.trim(),
     presentation: medicine.presentation.trim(),
+    concentration: medicine.concentration?.trim() || "",
+    storageConditions: medicine.storageConditions?.trim() || "",
+    location: medicine.location?.trim() || "",
+    supplier: medicine.supplier?.trim() || "",
     stock: Number(medicine.stock || 0),
     salePrice: Number(medicine.salePrice || 0),
+    purchasePrice: Number(medicine.purchasePrice || 0),
     minStock: Number(medicine.minStock || 0),
     updatedAt: serverTimestamp()
   };

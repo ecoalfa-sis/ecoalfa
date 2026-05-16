@@ -15,6 +15,16 @@ const POS_MEDICINES_LIMIT = 50;
 
 export const PAYMENT_TYPES = ["Efectivo", "Tarjeta", "Transferencia"];
 
+export async function getBillingPatients() {
+  const patientsQuery = query(collection(db, "patients"), orderBy("fullName"), limit(50));
+  const snapshot = await getDocs(patientsQuery);
+
+  return snapshot.docs.map((patientDoc) => ({
+    id: patientDoc.id,
+    ...patientDoc.data()
+  }));
+}
+
 export async function getPosMedicines() {
   const medicinesQuery = query(
     collection(db, "inventory"),
@@ -36,7 +46,10 @@ export async function createInvoice(invoice) {
 
   batch.set(invoiceRef, {
     number: invoice.number,
+    patientId: invoice.patientId || null,
     customerName: invoice.customerName.trim() || "Consumidor final",
+    customerDocument: invoice.customerDocument || "",
+    customerPhone: invoice.customerPhone || "",
     paymentType: invoice.paymentType,
     items: invoice.items,
     subtotal: invoice.subtotal,

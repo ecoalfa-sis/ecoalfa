@@ -22,7 +22,8 @@ Incluye:
 - Listado paginado de perfiles con máximo 10 documentos por carga.
 - Creación/actualización de documentos `users/{uid}`.
 - Edición de roles y activación/desactivación de perfiles.
-- Administración disponible solo para usuarios con rol `admin`.
+- Administración disponible para roles con acceso total: `admin` y `medico`.
+- El UID de Firebase Authentication se muestra como referencia no editable al modificar perfiles existentes.
 
 ## FASE 3
 
@@ -32,6 +33,9 @@ Incluye:
 - Agenda diaria consultada por `dateKey`.
 - Listado paginado de máximo 20 citas por carga.
 - Creación y edición de citas.
+- Selector de médicos desde la colección `doctors`.
+- Registro básico de médicos con nombre, documento, tarjeta profesional, especialidad, contacto y estado.
+- Página pública `agendar.html` para solicitudes externas en `publicAppointmentRequests`.
 - Cambio rápido de estados: Programada, Confirmada, En Sala de Espera, Atendida, Cancelada.
 - Acceso para roles `admin`, `medico` y `operador`.
 
@@ -40,11 +44,11 @@ Incluye:
 Incluye:
 
 - Módulo `pacientes` separado de la UI global.
-- Base de pacientes con datos personales, contacto y antecedentes.
+- Base de pacientes con tipo/número de documento, nombres, apellidos, contacto, ubicación, EPS, ocupación, grupo sanguíneo, contacto de emergencia y antecedentes.
 - Listado paginado de máximo 15 pacientes por carga.
 - Búsqueda puntual por número de documento.
 - Historia clínica por subcolección `patients/{patientId}/clinicalRecords`.
-- Registro de motivo, enfermedad actual, revisión por sistemas, diagnóstico y prescripción/fórmula médica.
+- Historia clínica profesional con motivo, enfermedad actual, antecedentes, alergias, medicamentos actuales, signos vitales, examen físico, revisión por sistemas, diagnóstico, CIE-10, plan de manejo, prescripción, recomendaciones y seguimiento.
 - Acceso protegido para roles `admin` y `medico`.
 
 ## FASE 5
@@ -52,12 +56,12 @@ Incluye:
 Incluye:
 
 - Módulo `inventario` separado de la UI global.
-- CRUD de medicamentos homeopáticos con nombre, potencia, presentación, stock, precio y stock mínimo.
+- CRUD de medicamentos homeopáticos con nombre, principio activo, registro sanitario, laboratorio, lote, vencimiento, potencia, presentación, concentración, almacenamiento, ubicación, proveedor, stock, costo, precio y stock mínimo.
 - Alertas visuales de stock bajo.
 - Movimientos de entrada, salida y ajuste positivo con auditoría.
 - Listado paginado de máximo 15 medicamentos y 10 movimientos por carga.
-- Acceso de lectura para `admin`, `operador` y `asesor`.
-- Escritura restringida a `admin` y `operador`.
+- Acceso para `admin`, `medico` y `operador`.
+- Escritura restringida a `admin`, `medico` y `operador`.
 
 ## FASE 6
 
@@ -65,11 +69,13 @@ Incluye:
 
 - Módulo `facturacion` separado de la UI global.
 - POS para facturar consultas médicas y venta de medicamentos.
+- Asociación opcional de factura con paciente registrado desde `patients`.
+- Registro en factura de `patientId`, documento y teléfono del cliente cuando aplica.
 - Tipos de pago: Efectivo, Tarjeta y Transferencia.
 - Descuento automático de inventario al facturar medicamentos.
 - Registro de salida en `inventory/{medicineId}/movements` por cada medicamento vendido.
 - Generación de ticket térmico básico de 80mm.
-- Acceso protegido para roles `admin` y `operador`.
+- Acceso protegido para roles `admin`, `medico` y `operador`.
 
 ## FASE 7
 
@@ -99,6 +105,7 @@ src/
   citas/
     citas.service.js
     citas.ui.js
+    medicos.service.js
   dashboard/
     dashboard.service.js
     dashboard.ui.js
@@ -131,6 +138,8 @@ src/
 5. Publica las reglas de `firestore.rules` en Firestore Rules.
 6. Inicia sesión en la app con ese usuario.
 
+También puedes usar `iniciar.html` como herramienta de diagnóstico e inicialización para crear el perfil inicial y copiar reglas temporales/finales.
+
 ## Optimización Firestore Spark
 
 - Usar `getDocs()` y consultas paginadas por defecto.
@@ -139,11 +148,13 @@ src/
 
 ## Índices Firestore
 
-El módulo de citas consulta `appointments` por `dateKey` y ordena por `time`. Si Firestore solicita un índice compuesto, créalo desde el enlace automático que aparece en la consola del navegador o en Firebase Console.
+El módulo de citas consulta `appointments` por `dateKey` y ordena por `time`. También consulta `doctors` por `fullName`. Si Firestore solicita un índice compuesto, créalo desde el enlace automático que aparece en la consola del navegador o en Firebase Console.
 
 El módulo de pacientes ordena `patients` por `fullName` y los registros clínicos por `createdAt` descendente dentro de cada paciente.
 
 El módulo de inventario ordena `inventory` por `name` y los movimientos por `createdAt` descendente dentro de cada medicamento.
+
+El módulo POS consulta `patients` por `fullName` para enlazar facturas a pacientes registrados.
 
 ## GitHub Pages
 

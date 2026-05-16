@@ -51,14 +51,33 @@ export async function searchPatientsByDocument(documentNumber) {
 }
 
 export async function upsertPatient(patientId, patient) {
+  const firstName = patient.firstName?.trim() || "";
+  const secondName = patient.secondName?.trim() || "";
+  const firstLastName = patient.firstLastName?.trim() || "";
+  const secondLastName = patient.secondLastName?.trim() || "";
+  const fullName = patient.fullName?.trim() || [firstName, secondName, firstLastName, secondLastName].filter(Boolean).join(" ");
+
   const payload = {
-    fullName: patient.fullName.trim(),
+    documentType: patient.documentType || "CC",
     documentNumber: patient.documentNumber.trim(),
-    phone: patient.phone.trim(),
-    email: patient.email.trim().toLowerCase(),
-    birthDate: patient.birthDate,
-    address: patient.address.trim(),
-    background: patient.background.trim(),
+    firstName,
+    secondName,
+    firstLastName,
+    secondLastName,
+    fullName,
+    phone: patient.phone?.trim() || "",
+    email: patient.email?.trim().toLowerCase() || "",
+    birthDate: patient.birthDate || "",
+    gender: patient.gender || "Prefiero no decirlo",
+    address: patient.address?.trim() || "",
+    neighborhood: patient.neighborhood?.trim() || "",
+    municipality: patient.municipality?.trim() || "",
+    eps: patient.eps?.trim() || "",
+    bloodType: patient.bloodType || "",
+    occupation: patient.occupation?.trim() || "",
+    emergencyContactName: patient.emergencyContactName?.trim() || "",
+    emergencyContactPhone: patient.emergencyContactPhone?.trim() || "",
+    background: patient.background?.trim() || "",
     updatedAt: serverTimestamp()
   };
 
@@ -97,11 +116,29 @@ export async function getClinicalRecords(patientId, lastVisible = null) {
 
 export async function createClinicalRecord(patientId, record) {
   await addDoc(collection(db, "patients", patientId, "clinicalRecords"), {
-    reason: record.reason.trim(),
-    currentIllness: record.currentIllness.trim(),
-    systemsReview: record.systemsReview.trim(),
-    diagnosis: record.diagnosis.trim(),
-    prescription: record.prescription.trim(),
+    reason: record.reason?.trim() || "",
+    currentIllness: record.currentIllness?.trim() || "",
+    personalHistory: record.personalHistory?.trim() || "",
+    familyHistory: record.familyHistory?.trim() || "",
+    allergies: record.allergies?.trim() || "",
+    currentMedications: record.currentMedications?.trim() || "",
+    vitalSigns: {
+      bloodPressure: record.bloodPressure?.trim() || "",
+      heartRate: record.heartRate?.trim() || "",
+      respiratoryRate: record.respiratoryRate?.trim() || "",
+      temperature: record.temperature?.trim() || "",
+      oxygenSaturation: record.oxygenSaturation?.trim() || "",
+      weight: record.weight?.trim() || "",
+      height: record.height?.trim() || ""
+    },
+    physicalExam: record.physicalExam?.trim() || "",
+    systemsReview: record.systemsReview?.trim() || "",
+    diagnosis: record.diagnosis?.trim() || "",
+    cie10: record.cie10?.trim() || "",
+    treatmentPlan: record.treatmentPlan?.trim() || "",
+    prescription: record.prescription?.trim() || "",
+    recommendations: record.recommendations?.trim() || "",
+    followUp: record.followUp?.trim() || "",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });

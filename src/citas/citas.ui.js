@@ -4,15 +4,18 @@ import {
   getAppointmentsByDate,
   updateAppointment
 } from "./citas.service.js";
+import { createDoctor, getDoctors } from "./medicos.service.js";
 
 let selectedDateKey = getTodayKey();
 let lastVisibleAppointment = null;
 let canLoadMoreAppointments = false;
 let currentAppointments = [];
+let currentDoctors = [];
 
 export async function renderCitasModule(container) {
   container.innerHTML = renderShell();
   bindAppointmentEvents(container);
+  await loadDoctors(container);
   await loadAppointments(container, true);
 }
 
@@ -44,7 +47,23 @@ function renderShell() {
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-slate-700" for="doctorName">Médico asignado</label>
-              <input id="doctorName" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+              <div class="flex gap-2">
+                <select id="doctorName" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></select>
+                <button id="toggle-doctor-panel" title="Agregar médico" class="rounded-xl border border-slate-300 px-4 py-3 text-slate-700 hover:bg-slate-50" type="button">⚙</button>
+              </div>
+            </div>
+            <div id="doctor-panel" class="hidden rounded-2xl bg-slate-50 p-4">
+              <h4 class="font-semibold text-slate-900">Nuevo médico</h4>
+              <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                <input id="doctor-fullName" placeholder="Nombre completo" class="rounded-xl border border-slate-300 px-4 py-3 text-sm" />
+                <input id="doctor-documentNumber" placeholder="Documento" class="rounded-xl border border-slate-300 px-4 py-3 text-sm" />
+                <input id="doctor-professionalCard" placeholder="Registro médico / tarjeta profesional" class="rounded-xl border border-slate-300 px-4 py-3 text-sm" />
+                <input id="doctor-specialty" placeholder="Especialidad" class="rounded-xl border border-slate-300 px-4 py-3 text-sm" />
+                <input id="doctor-phone" placeholder="Celular" class="rounded-xl border border-slate-300 px-4 py-3 text-sm" />
+                <input id="doctor-email" type="email" placeholder="Correo" class="rounded-xl border border-slate-300 px-4 py-3 text-sm" />
+                <input id="doctor-address" placeholder="Dirección" class="rounded-xl border border-slate-300 px-4 py-3 text-sm sm:col-span-2" />
+              </div>
+              <button id="save-doctor" class="mt-3 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white" type="button">Guardar médico</button>
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
@@ -112,6 +131,47 @@ function bindAppointmentEvents(container) {
   container.querySelector("#clear-appointment-form").addEventListener("click", () => {
     resetAppointmentForm(container);
   });
+
+  container.querySelector("#toggle-doctor-panel").addEventListener("click", () => {
+    container.querySelector("#doctor-panel").classList.toggle("hidden");
+  });
+
+  container.querySelector("#save-doctor").addEventListener("click", async () => {
+    await saveDoctor(container);
+  });
+}
+
+async function loadDoctors(container) {
+  const select = container.querySelector("#doctorName");
+  select.innerHTML = `<option value="">Cargando médicos...</option>`;
+
+  try {
+    currentDoctors = await getDoctors();
+    select.innerHTML = `<option value="">Selecciona médico</option>${currentDoctors.map((doctor) => `<option value="${doctor.fullName}">${doctor.fullName} · ${doctor.specialty || "Medicina"}</option>`).join("")}`;
+  } catch (error) {
+    select.innerHTML = `<option value="">No fue posible cargar médicos</option>`;
+  }
+}
+
+async function saveDoctor(container) {
+  try {
+    await createDoctor({
+      fullName: container.querySelector("#doctor-fullName").value,
+      documentType: "CC",
+      documentNumber: container.querySelector("#doctor-documentNumber").value,
+      professionalCard: container.querySelector("#doctor-professionalCard").value,
+      specialty: container.querySelector("#doctor-specialty").value,
+      phone: container.querySelector("#doctor-phone").value,
+      email: container.querySelector("#doctor-email").value,
+      address: container.querySelector("#doctor-address").value
+    });
+
+    container.querySelector("#doctor-panel").classList.add("hidden");
+    await loadDoctors(container);
+    showMessage(container, "Médico creado correctamente.", "success");
+  } catch (error) {
+    showMessage(container, "No fue posible crear el médico. Verifica datos y permisos.", "error");
+  }
 }
 
 async function loadAppointments(container, reset) {

@@ -31,6 +31,7 @@ function renderShell() {
             <div>
               <label class="mb-1 block text-sm font-medium text-slate-700" for="uid">UID Auth</label>
               <input id="uid" required class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+              <p id="uid-help" class="mt-1 text-xs text-slate-500">Pega el UID de Firebase Authentication al crear el perfil.</p>
             </div>
             <div>
               <label class="mb-1 block text-sm font-medium text-slate-700" for="displayName">Nombre</label>
@@ -168,6 +169,9 @@ function fillForm(container, uid) {
   const form = container.querySelector("#user-profile-form");
 
   form.uid.value = user.id;
+  form.uid.readOnly = true;
+  form.uid.classList.add("bg-slate-100", "text-slate-500");
+  container.querySelector("#uid-help").textContent = "UID de Firebase Authentication visible para referencia. No se modifica en perfiles existentes.";
   form.displayName.value = user.displayName || "";
   form.email.value = user.email || "";
   form.role.value = user.role || ROLES.ASESOR;
@@ -185,6 +189,9 @@ async function saveProfile(container, form) {
 
     form.reset();
     form.active.checked = true;
+    form.uid.readOnly = false;
+    form.uid.classList.remove("bg-slate-100", "text-slate-500");
+    container.querySelector("#uid-help").textContent = "Pega el UID de Firebase Authentication al crear el perfil.";
     await loadUsers(container, true);
     showMessage(container, "Perfil guardado correctamente.", "success");
   } catch (error) {

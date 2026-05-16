@@ -1,12 +1,14 @@
-import { PAYMENT_TYPES, createInvoice, getPosMedicines } from "./facturacion.service.js";
+import { PAYMENT_TYPES, createInvoice, getBillingPatients, getPosMedicines } from "./facturacion.service.js";
 
 let medicines = [];
+let patients = [];
 let cart = [];
 let lastInvoice = null;
 
 export async function renderFacturacionModule(container) {
   container.innerHTML = renderShell();
   bindPosEvents(container);
+  await loadPatients(container);
   await loadMedicines(container);
   renderCart(container);
 }
@@ -62,6 +64,10 @@ function renderShell() {
             <h3 class="text-lg font-semibold text-slate-900">Datos de pago</h3>
             <div class="mt-5 space-y-4">
               <div>
+                <label class="mb-1 block text-sm font-medium text-slate-700" for="patient-select">Paciente registrado</label>
+                <select id="patient-select" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></select>
+              </div>
+              <div>
                 <label class="mb-1 block text-sm font-medium text-slate-700" for="customer-name">Cliente</label>
                 <input id="customer-name" placeholder="Consumidor final" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
               </div>
@@ -101,12 +107,36 @@ function renderShell() {
 
 function bindPosEvents(container) {
   container.querySelector("#item-type").addEventListener("change", () => toggleItemFields(container));
+  container.querySelector("#patient-select").addEventListener("change", () => fillCustomerFromPatient(container));
   container.querySelector("#pos-form").addEventListener("submit", (event) => {
     event.preventDefault();
     addCartItem(container);
   });
   container.querySelector("#save-invoice").addEventListener("click", async () => saveInvoice(container));
   container.querySelector("#print-ticket").addEventListener("click", () => printTicket());
+}
+
+async function loadPatients(container) {
+  const select = container.querySelector("#patient-select");
+  select.innerHTML = `<option value="">Cargando pacientes...</option>`;
+
+  try {
+    patients = await getBillingPatients();
+    select.innerHTML = `<option value="">Consumidor final / no registrado</option>${patients.map((patient) => `<option value="${patient.id}">${patient.fullName} · ${patient.documentNumber || "Sin documento"}</option>`).join("")}`;
+  } catch (error) {
+    select.innerHTML = `<option value="">No fue posible cargar pacientes</option>`;
+  }
+}
+
+function fillCustomerFromPatient(container) {
+  const patientId = container.querySelector("#patient-select").value;
+  const patient = patients.find((item) => item.id === patientId);
+
+  if (!patient) {
+    return;
+  }
+
+  container.querySelector("#customer-name").value = patient.fullName || "";
 }
 
 async function loadMedicines(container) {
@@ -239,10 +269,15 @@ async function saveInvoice(container) {
 
 function buildInvoicePreview(container) {
   const total = getCartTotal();
+  const patientId = container.querySelector("#patient-select").value;
+  const patient = patients.find((item) => item.id === patientId);
 
   return {
     number: generateInvoiceNumber(),
+    patientId: patient?.id || null,
     customerName: container.querySelector("#customer-name").value || "Consumidor final",
+    customerDocument: patient?.documentNumber || "",
+    customerPhone: patient?.phone || "",
     paymentType: container.querySelector("#payment-type").value,
     items: cart.map((item) => ({
       type: item.type,
@@ -267,6 +302,7 @@ ECOALFA
 Medicina Homeopática
 Factura: ${invoice.number}
 Cliente: ${invoice.customerName}
+Documento: ${invoice.customerDocument || "N/A"}
 Pago: ${invoice.paymentType}
 ------------------------
 ${invoice.items.map((item) => `${item.name}\n${item.quantity} x $${formatCurrency(item.unitPrice)} = $${formatCurrency(item.total)}`).join("\n")}

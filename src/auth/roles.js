@@ -13,12 +13,12 @@ export const ROLE_LABELS = {
 };
 
 export const ROUTE_PERMISSIONS = {
-  dashboard: [ROLES.ADMIN, ROLES.ASESOR],
+  dashboard: [ROLES.ADMIN, ROLES.MEDICO, ROLES.OPERADOR],
   citas: [ROLES.ADMIN, ROLES.MEDICO, ROLES.OPERADOR],
   pacientes: [ROLES.ADMIN, ROLES.MEDICO],
-  inventario: [ROLES.ADMIN, ROLES.ASESOR, ROLES.OPERADOR],
-  facturacion: [ROLES.ADMIN, ROLES.OPERADOR],
-  usuarios: [ROLES.ADMIN]
+  inventario: [ROLES.ADMIN, ROLES.MEDICO, ROLES.OPERADOR],
+  facturacion: [ROLES.ADMIN, ROLES.MEDICO, ROLES.OPERADOR],
+  usuarios: [ROLES.ADMIN, ROLES.MEDICO]
 };
 
 export function canAccess(route, role) {

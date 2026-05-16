@@ -24,7 +24,7 @@ export async function renderInventarioModule(container) {
 
 function canWriteInventory() {
   const role = getSession().profile?.role;
-  return role === ROLES.ADMIN || role === ROLES.OPERADOR;
+  return role === ROLES.ADMIN || role === ROLES.MEDICO || role === ROLES.OPERADOR;
 }
 
 function renderShell() {
@@ -46,13 +46,27 @@ function renderShell() {
           <input id="medicine-id" type="hidden" />
           <div class="mt-5 space-y-4">
             ${renderInput("name", "Nombre", "text", true)}
+            ${renderInput("activeIngredient", "Principio activo", "text", false)}
+            ${renderInput("sanitaryRegistry", "Registro sanitario", "text", false)}
+            ${renderInput("laboratory", "Laboratorio", "text", false)}
+            <div class="grid gap-4 sm:grid-cols-2">
+              ${renderInput("lot", "Lote", "text", false)}
+              ${renderInput("expirationDate", "Fecha de vencimiento", "date", false)}
+            </div>
             ${renderInput("potency", "Dilución / Potencia", "text", true)}
             ${renderInput("presentation", "Presentación", "text", true)}
+            ${renderInput("concentration", "Concentración", "text", false)}
+            ${renderInput("storageConditions", "Condiciones de almacenamiento", "text", false)}
+            <div class="grid gap-4 sm:grid-cols-2">
+              ${renderInput("location", "Ubicación interna", "text", false)}
+              ${renderInput("supplier", "Proveedor", "text", false)}
+            </div>
             <div class="grid gap-4 sm:grid-cols-3">
               ${renderInput("stock", "Stock", "number", true)}
               ${renderInput("minStock", "Mínimo", "number", true)}
               ${renderInput("salePrice", "Precio", "number", true)}
             </div>
+            ${renderInput("purchasePrice", "Costo de compra", "number", false)}
             <p id="inventory-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
             <div class="grid gap-3 sm:grid-cols-2">
               <button class="rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800" type="submit">Guardar</button>
@@ -142,6 +156,7 @@ function renderInventoryTable(medicines) {
         <tr>
           <th class="px-5 py-3">Medicamento</th>
           <th class="px-5 py-3">Presentación</th>
+          <th class="px-5 py-3">Lote/Vence</th>
           <th class="px-5 py-3">Stock</th>
           <th class="px-5 py-3">Precio</th>
           <th class="px-5 py-3 text-right">Acciones</th>
@@ -161,9 +176,10 @@ function renderMedicineRow(medicine) {
     <tr>
       <td class="px-5 py-4">
         <div class="font-medium text-slate-900">${medicine.name || "Sin nombre"}</div>
-        <div class="text-xs text-slate-500">${medicine.potency || "Sin potencia"}</div>
+        <div class="text-xs text-slate-500">${medicine.activeIngredient || medicine.potency || "Sin principio activo"}</div>
       </td>
-      <td class="px-5 py-4 text-slate-600">${medicine.presentation || "Sin presentación"}</td>
+      <td class="px-5 py-4 text-slate-600">${medicine.presentation || "Sin presentación"} · ${medicine.potency || "Sin potencia"}</td>
+      <td class="px-5 py-4 text-slate-600">${medicine.lot || "Sin lote"}<br><span class="text-xs text-slate-400">${medicine.expirationDate || "Sin vencimiento"}</span></td>
       <td class="px-5 py-4">
         <span class="rounded-full px-3 py-1 text-xs font-medium ${lowStock ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}">${medicine.stock || 0} / mín. ${medicine.minStock || 0}</span>
       </td>
@@ -192,22 +208,42 @@ function fillMedicineForm(container, medicineId) {
 
   form.querySelector("#medicine-id").value = medicine.id;
   form.name.value = medicine.name || "";
+  form.activeIngredient.value = medicine.activeIngredient || "";
+  form.sanitaryRegistry.value = medicine.sanitaryRegistry || "";
+  form.laboratory.value = medicine.laboratory || "";
+  form.lot.value = medicine.lot || "";
+  form.expirationDate.value = medicine.expirationDate || "";
   form.potency.value = medicine.potency || "";
   form.presentation.value = medicine.presentation || "";
+  form.concentration.value = medicine.concentration || "";
+  form.storageConditions.value = medicine.storageConditions || "";
+  form.location.value = medicine.location || "";
+  form.supplier.value = medicine.supplier || "";
   form.stock.value = medicine.stock || 0;
   form.minStock.value = medicine.minStock || 0;
   form.salePrice.value = medicine.salePrice || 0;
+  form.purchasePrice.value = medicine.purchasePrice || 0;
 }
 
 async function saveMedicine(container, form) {
   try {
     await upsertMedicine(form.querySelector("#medicine-id").value, {
       name: form.name.value,
+      activeIngredient: form.activeIngredient.value,
+      sanitaryRegistry: form.sanitaryRegistry.value,
+      laboratory: form.laboratory.value,
+      lot: form.lot.value,
+      expirationDate: form.expirationDate.value,
       potency: form.potency.value,
       presentation: form.presentation.value,
+      concentration: form.concentration.value,
+      storageConditions: form.storageConditions.value,
+      location: form.location.value,
+      supplier: form.supplier.value,
       stock: form.stock.value,
       minStock: form.minStock.value,
-      salePrice: form.salePrice.value
+      salePrice: form.salePrice.value,
+      purchasePrice: form.purchasePrice.value
     });
 
     resetMedicineForm(container);

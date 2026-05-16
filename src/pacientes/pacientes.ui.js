@@ -1,5 +1,8 @@
 import {
+  getPatientByDocument,
   getPatientsPage,
+  linkPatientToAuth,
+  mergePatientRecords,
   searchPatientsByDocument,
   upsertPatient
 } from "./pacientes.service.js";
@@ -170,6 +173,8 @@ function renderPatientsTable(patients) {
           <th class="px-5 py-3">Paciente</th>
           <th class="px-5 py-3">Documento</th>
           <th class="px-5 py-3">Contacto</th>
+          <th class="px-5 py-3">Origen</th>
+          <th class="px-5 py-3">Portal</th>
           <th class="px-5 py-3 text-right">Acciones</th>
         </tr>
       </thead>
@@ -181,17 +186,34 @@ function renderPatientsTable(patients) {
 }
 
 function renderPatientRow(patient) {
+  const sourceBadge = getSourceBadge(patient.source);
+  const portalStatus = patient.authUid 
+    ? `<span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">Vinculado</span>`
+    : `<span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">Sin vincular</span>`;
+  
   return `
     <tr>
       <td class="px-5 py-4 font-medium text-slate-900">${patient.fullName || "Sin nombre"}</td>
       <td class="px-5 py-4 text-slate-600">${patient.documentNumber || "Sin documento"}</td>
       <td class="px-5 py-4 text-slate-600">${patient.phone || patient.email || "Sin contacto"}</td>
+      <td class="px-5 py-4">${sourceBadge}</td>
+      <td class="px-5 py-4">${portalStatus}</td>
       <td class="px-5 py-4 text-right">
         <button data-edit-patient="${patient.id}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">Editar</button>
+        ${!patient.authUid ? `<button data-link-patient="${patient.id}" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">Vincular portal</button>` : ""}
         <a href="#historias" data-open-history="${patient.id}" class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100">Abrir historia</a>
       </td>
     </tr>
   `;
+}
+
+function getSourceBadge(source) {
+  const badges = {
+    manual: `<span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">Interno</span>`,
+    patient_portal: `<span class="inline-flex items-center rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700">Portal</span>`,
+    linked: `<span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">Vinculado</span>`
+  };
+  return badges[source] || badges.manual;
 }
 
 function bindPatientsTableEvents(container) {
@@ -204,6 +226,65 @@ function bindPatientsTableEvents(container) {
       sessionStorage.setItem("ecoalfa:selectedPatientId", link.dataset.openHistory);
     });
   });
+
+  container.querySelectorAll("[data-link-patient]").forEach((button) => {
+    button.addEventListener("click", () => linkPatientToPortal(container, button.dataset.linkPatient));
+  });
+}
+
+async function linkPatientToPortal(container, patientId) {
+  const patient = currentPatients.find((p) => p.id === patientId);
+  if (!patient) return;
+
+  const email = prompt(`Vincular paciente: ${patient.fullName}\n\nIngresa el correo del usuario registrado en el portal:`);
+  if (!email || !email.includes("@")) {
+    showMessage(container, "Correo inválido. Debe ser un correo válido.", "error");
+    return;
+  }
+
+  try {
+    showMessage(container, "Buscando paciente en portal...", "success");
+    
+    const portalPatient = await getPatientByDocument(patient.documentNumber);
+    
+    if (!portalPatient) {
+      showMessage(container, "No se encontró paciente con ese documento en el portal. El usuario debe registrarse primero en citas.html", "error");
+      return;
+    }
+
+    if (portalPatient.id === patientId) {
+      showMessage(container, "Este paciente ya es el registro principal.", "error");
+      return;
+    }
+
+    if (!portalPatient.authUid) {
+      showMessage(container, "El paciente del portal no tiene cuenta de autenticación vinculada.", "error");
+      return;
+    }
+
+    const confirmMerge = confirm(
+      `Se encontró paciente en portal:\n${portalPatient.fullName}\nCorreo: ${portalPatient.email}\n\n` +
+      `¿Deseas vincular y migrar el historial clínico?\n\n` +
+      `- El paciente interno quedará como principal\n` +
+      `- Se migrarán ${portalPatient.recordCount || "las"} historias clínicas del portal\n` +
+      `- El registro del portal se marcará como vinculado`
+    );
+
+    if (!confirmMerge) return;
+
+    showMessage(container, "Vinculando y migrando historial...", "success");
+
+    await linkPatientToAuth(patientId, portalPatient.authUid, portalPatient.email);
+    
+    const migratedCount = await mergePatientRecords(portalPatient.id, patientId);
+    
+    showMessage(container, `Paciente vinculado exitosamente. ${migratedCount} registros migrados.`, "success");
+    
+    await loadPatients(container, true);
+  } catch (error) {
+    console.error("Error vinculando paciente:", error);
+    showMessage(container, `Error: ${error.message || "No fue posible vincular"}`, "error");
+  }
 }
 
 function fillPatientForm(container, patientId) {

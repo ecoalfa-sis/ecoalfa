@@ -60,9 +60,9 @@ service cloud.firestore {
     }
 
     match /patients/{patientId} {
-      allow read: if hasFullAccess() || (signedIn() && (resource == null || resource.data.authUid == request.auth.uid));
-      allow create: if hasFullAccess() || (signedIn() && request.resource.data.authUid == request.auth.uid);
-      allow update: if hasFullAccess() || (signedIn() && resource.data.authUid == request.auth.uid);
+      allow read: if signedIn();
+      allow create: if hasFullAccess() || isOperador() || (signedIn() && request.resource.data.authUid == request.auth.uid);
+      allow update: if hasFullAccess() || isOperador() || (signedIn() && (resource.data.authUid == request.auth.uid || !resource.data.authUid));
       allow delete: if hasFullAccess();
 
       match /clinicalRecords/{recordId} {

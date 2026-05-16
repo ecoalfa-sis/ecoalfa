@@ -50,6 +50,7 @@
       const root = document.querySelector("#patient-app");
       let currentPatient = null;
       let doctors = [];
+      let pendingAuthUser = null;
 
       onAuthStateChanged(auth, async (user) => {
         if (!user) {
@@ -66,9 +67,87 @@
           await loadPortalData(user, currentPatient);
         } catch (error) {
           console.error("No fue posible cargar el portal del paciente", error);
-          renderAuth("Tu usuario existe, pero aún no tiene perfil de paciente asociado. Completa el registro con el mismo correo.");
+          pendingAuthUser = user;
+          renderCompleteProfile("Tu usuario existe, pero aún no tiene perfil de paciente asociado. Completa tus datos para continuar.");
         }
       });
+
+      function renderCompleteProfile(message = "") {
+        root.innerHTML = `
+          <main class="mx-auto max-w-6xl p-6">
+            <section class="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
+              <div class="relative overflow-hidden bg-slate-950 px-8 py-10 text-white">
+                <canvas id="hero-canvas" class="absolute inset-0 h-full w-full"></canvas>
+                <div class="relative z-10">
+                  <div class="mb-6 inline-flex items-center gap-4 rounded-3xl border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur">
+                    <img src="./assets/ecoalfa-logo.svg" alt="Logo Ecoalfa" class="h-20 w-20 rounded-2xl bg-white object-contain" />
+                    <div>
+                      <p class="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-200">Ecoalfa</p>
+                      <p class="text-sm text-white/70">Completa tu perfil</p>
+                    </div>
+                  </div>
+                  <h1 class="max-w-2xl text-3xl font-black tracking-tight md:text-4xl">Completa tus datos de paciente</h1>
+                </div>
+              </div>
+              <div class="p-6 lg:p-10">
+                ${message ? `<p class="mb-6 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">${message}</p>` : ""}
+                <form id="complete-profile-form" class="grid gap-4 sm:grid-cols-2">
+                  ${selectField("documentType", "Tipo documento", ["CC", "TI", "CE", "Pasaporte", "PEP", "NIT"])}
+                  ${inputField("documentNumber", "Número de documento", "text", true)}
+                  ${inputField("firstName", "Primer nombre", "text", true)}
+                  ${inputField("middleName", "Segundo nombre", "text", false)}
+                  ${inputField("firstLastName", "Primer apellido", "text", true)}
+                  ${inputField("secondLastName", "Segundo apellido", "text", false)}
+                  ${inputField("phone", "Celular", "tel", true)}
+                  ${selectField("gender", "Género", ["Hombre", "Mujer", "Otro", "Prefiero no decirlo"])}
+                  ${inputField("customGender", "Si elegiste otro, escríbelo", "text", false)}
+                  ${inputField("address", "Dirección", "text", true)}
+                  ${inputField("neighborhood", "Barrio", "text", true)}
+                  ${inputField("municipality", "Municipio", "text", true)}
+                  <div class="sm:col-span-2">
+                    <p id="profile-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <button class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white" type="submit">Guardar mi perfil y continuar</button>
+                  </div>
+                </form>
+              </div>
+              <div aria-label="Ecoalfa servicios" class="min-h-[200px] bg-white bg-contain bg-center bg-no-repeat sm:min-h-[280px]" style="background-image: url('./assets/ecoalfa-banner.jpeg');"></div>
+            </section>
+          </main>
+        `;
+        initHeroCanvas();
+        
+        document.querySelector("#complete-profile-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          
+          if (!pendingAuthUser) {
+            showProfileMessage("Error: No hay usuario autenticado. Recarga la página.", "error");
+            return;
+          }
+          
+          try {
+            await createPatientProfile(pendingAuthUser.uid, form);
+            showProfileMessage("Perfil guardado exitosamente. Redirigiendo...", "success");
+            setTimeout(() => location.reload(), 1500);
+          } catch (error) {
+            console.error("Error guardando perfil:", error);
+            if (error.message === "user-cancelled-link") {
+              showProfileMessage("Debes vincular con el paciente existente para continuar.", "error");
+            } else {
+              showProfileMessage("No fue posible guardar el perfil. Intenta de nuevo.", "error");
+            }
+          }
+        });
+      }
+
+      function showProfileMessage(message, type) {
+        const box = document.querySelector("#profile-message");
+        box.className = `rounded-xl px-4 py-3 text-sm ${type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`;
+        box.textContent = message;
+        box.classList.remove("hidden");
+      }
 
       function renderAuth(message = "") {
         root.innerHTML = `
@@ -172,7 +251,11 @@
             await createPatientProfile(credential.user.uid, form);
           } catch (error) {
             console.error("Registro paciente falló", error);
-            showAuthMessage("No fue posible crear el usuario. Revisa si el correo ya existe o si las reglas permiten registro.", "error");
+            if (error.message === "user-cancelled-link") {
+              showAuthMessage("Registro cancelado. Para continuar debes vincular con el paciente existente o contactar al consultorio.", "error");
+            } else {
+              showAuthMessage("No fue posible crear el usuario. Revisa si el correo ya existe o si las reglas permiten registro.", "error");
+            }
           }
         });
       }
@@ -329,18 +412,64 @@
         document.querySelector("#records-panel-content").innerHTML = renderRecords(records);
       }
 
+      async function findPatientByDocument(documentNumber) {
+        const q = query(collection(db, "patients"), where("documentNumber", "==", documentNumber.trim()), limit(1));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) return null;
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
+      }
+
       async function createPatientProfile(uid, form) {
+        const documentNumber = form.documentNumber.value.trim();
         const fullName = [form.firstName.value, form.middleName.value, form.firstLastName.value, form.secondLastName.value].filter(Boolean).join(" ");
+        const email = form.email.value.trim().toLowerCase();
+        
+        const existingPatient = await findPatientByDocument(documentNumber);
+        
+        if (existingPatient && existingPatient.id !== uid) {
+          const confirmLink = confirm(
+            `Ya existe un paciente con documento ${documentNumber} en nuestro sistema:\n` +
+            `Nombre: ${existingPatient.fullName}\n\n` +
+            `¿Deseas vincular tu cuenta de portal con este registro existente?\n\n` +
+            `Al vincular:\n` +
+            `- Podrás ver tu historial clínico previo\n` +
+            `- Tus citas y facturas quedarán centralizadas\n` +
+            `- El registro del portal se fusionará con el principal`
+          );
+          
+          if (!confirmLink) {
+            throw new Error("user-cancelled-link");
+          }
+          
+          await setDoc(doc(db, "patients", existingPatient.id), {
+            authUid: uid,
+            email,
+            phone: form.phone.value.trim(),
+            source: "linked",
+            linkedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          
+          await setDoc(doc(db, "patients", uid), {
+            mergedInto: existingPatient.id,
+            mergedAt: serverTimestamp()
+          });
+          
+          showAuthMessage("Cuenta vinculada exitosamente. Ahora puedes ingresar con tu correo.", "success");
+          return;
+        }
+        
         await setDoc(doc(db, "patients", uid), {
           authUid: uid,
           documentType: form.documentType.value,
-          documentNumber: form.documentNumber.value.trim(),
+          documentNumber,
           firstName: form.firstName.value.trim(),
           middleName: form.middleName.value.trim(),
           firstLastName: form.firstLastName.value.trim(),
           secondLastName: form.secondLastName.value.trim(),
           fullName,
-          email: form.email.value.trim().toLowerCase(),
+          email,
           phone: form.phone.value.trim(),
           address: form.address.value.trim(),
           neighborhood: form.neighborhood.value.trim(),
@@ -355,7 +484,24 @@
 
       async function getPatientByAuthUser(user) {
         const patientSnap = await getDoc(doc(db, "patients", user.uid));
-        if (patientSnap.exists()) return { id: patientSnap.id, ...patientSnap.data() };
+        if (patientSnap.exists()) {
+          const data = patientSnap.data();
+          if (data.mergedInto) {
+            const mainPatientSnap = await getDoc(doc(db, "patients", data.mergedInto));
+            if (mainPatientSnap.exists()) {
+              return { id: mainPatientSnap.id, ...mainPatientSnap.data() };
+            }
+          }
+          return { id: patientSnap.id, ...data };
+        }
+        
+        const q = query(collection(db, "patients"), where("authUid", "==", user.uid), limit(1));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const doc = snapshot.docs[0];
+          return { id: doc.id, ...doc.data() };
+        }
+        
         throw new Error("patient-profile-not-found");
       }
 

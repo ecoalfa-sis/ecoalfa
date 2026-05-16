@@ -10,7 +10,8 @@ import {
   serverTimestamp,
   startAfter,
   updateDoc,
-  where
+  where,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { db } from "../firebase/config.js";
 
@@ -63,6 +64,58 @@ export async function getPatientById(patientId) {
     id: patientSnap.id,
     ...patientSnap.data()
   };
+}
+
+export async function getPatientByDocument(documentNumber) {
+  const patientsQuery = query(
+    collection(db, "patients"),
+    where("documentNumber", "==", documentNumber.trim()),
+    limit(1)
+  );
+  const snapshot = await getDocs(patientsQuery);
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  const patientDoc = snapshot.docs[0];
+  return {
+    id: patientDoc.id,
+    ...patientDoc.data()
+  };
+}
+
+export async function linkPatientToAuth(patientId, authUid, email) {
+  await updateDoc(doc(db, "patients", patientId), {
+    authUid,
+    email,
+    source: "linked",
+    linkedAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+}
+
+export async function mergePatientRecords(sourcePatientId, targetPatientId) {
+  const sourceRecordsQuery = query(
+    collection(db, "patients", sourcePatientId, "clinicalRecords"),
+    orderBy("createdAt", "asc")
+  );
+  const snapshot = await getDocs(sourceRecordsQuery);
+
+  const batch = [];
+  snapshot.docs.forEach((recordDoc) => {
+    const recordData = recordDoc.data();
+    batch.push(
+      addDoc(collection(db, "patients", targetPatientId, "clinicalRecords"), {
+        ...recordData,
+        mergedFrom: sourcePatientId,
+        mergedAt: serverTimestamp()
+      })
+    );
+  });
+
+  await Promise.all(batch);
+  return batch.length;
 }
 
 export async function upsertPatient(patientId, patient) {

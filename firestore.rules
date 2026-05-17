@@ -39,7 +39,11 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if signedIn() && (request.auth.uid == userId || hasFullAccess());
+      allow read: if signedIn() && (
+        request.auth.uid == userId
+        || hasFullAccess()
+        || (resource.data.role == 'medico' && resource.data.active == true)
+      );
       allow create, update, delete: if isAdmin();
     }
 

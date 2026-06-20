@@ -7,11 +7,16 @@
     <title>Ecoalfa | Medicina homeopática en Colombia</title>
     <style>
       :root {
-        --eco-blue: #148dcc;
-        --eco-green: #43aa35;
-        --eco-dark: #061522;
-        --eco-slate: #0f2433;
-        --eco-light: #f6fbff;
+        --eco-blue: #009EE3;
+        --eco-blue-dark: #0077B6;
+        --eco-blue-light: #E6F6FC;
+        --eco-green: #43B02A;
+        --eco-green-light: #E8F5E4;
+        --text: #333333;
+        --text-light: #5A6A7A;
+        --bg: #FFFFFF;
+        --bg-soft: #F5F9FC;
+        --border: #E2E8F0;
       }
 
       * {
@@ -26,24 +31,9 @@
         margin: 0;
         min-height: 100vh;
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        color: white;
-        background:
-          radial-gradient(circle at 15% 10%, rgba(20, 141, 204, 0.34), transparent 32rem),
-          radial-gradient(circle at 80% 0%, rgba(67, 170, 53, 0.24), transparent 28rem),
-          linear-gradient(135deg, #061522 0%, #0a2031 42%, #07121d 100%);
-        overflow-x: hidden;
-      }
-
-      body::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        background-image:
-          linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-        background-size: 52px 52px;
-        mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent 82%);
+        color: var(--text);
+        background: var(--bg);
+        line-height: 1.6;
       }
 
       a {
@@ -51,574 +41,909 @@
         text-decoration: none;
       }
 
-      .shell {
-        position: relative;
-        z-index: 1;
-        width: min(1180px, calc(100% - 32px));
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .container {
+        width: min(1200px, calc(100% - 48px));
         margin: 0 auto;
       }
 
-      .nav {
+      /* Header */
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(255, 255, 255, 0.98);
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(8px);
+      }
+
+      .header-inner {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 24px;
-        padding: 24px 0;
+        padding: 16px 0;
       }
 
       .brand {
         display: inline-flex;
         align-items: center;
-        gap: 14px;
+        gap: 12px;
       }
 
       .brand img {
-        width: 64px;
-        height: 64px;
-        border-radius: 18px;
+        width: 56px;
+        height: 56px;
         object-fit: contain;
-        background: white;
-        padding: 6px;
-        box-shadow: 0 0 42px rgba(20, 141, 204, 0.34);
       }
 
-      .brand strong {
-        display: block;
-        font-size: 1.1rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+      .brand-text {
+        display: flex;
+        flex-direction: column;
       }
 
-      .brand span {
-        display: block;
-        margin-top: 4px;
-        color: rgba(255, 255, 255, 0.62);
-        font-size: 0.86rem;
+      .brand-text strong {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: -0.02em;
+        line-height: 1.2;
       }
 
-      .nav-links {
+      .brand-text span {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        font-style: italic;
+      }
+
+      .nav {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 32px;
       }
 
-      .nav-links a {
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 999px;
-        padding: 10px 16px;
-        color: rgba(255, 255, 255, 0.78);
-        background: rgba(255, 255, 255, 0.04);
-        backdrop-filter: blur(12px);
+      .nav a {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text);
+        transition: color 0.2s;
       }
 
-      .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
-        gap: 44px;
-        align-items: center;
-        padding: 56px 0 78px;
-      }
-
-      .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        border: 1px solid rgba(67, 170, 53, 0.38);
-        border-radius: 999px;
-        padding: 9px 14px;
-        color: #c9f7c4;
-        background: rgba(67, 170, 53, 0.12);
-        box-shadow: 0 0 32px rgba(67, 170, 53, 0.14);
-      }
-
-      .pulse {
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: var(--eco-green);
-        box-shadow: 0 0 0 8px rgba(67, 170, 53, 0.14), 0 0 28px rgba(67, 170, 53, 0.8);
-      }
-
-      h1 {
-        margin: 24px 0 0;
-        max-width: 780px;
-        font-size: clamp(3rem, 7vw, 6.7rem);
-        line-height: 0.94;
-        letter-spacing: -0.075em;
-      }
-
-      .gradient-text {
-        background: linear-gradient(90deg, #ffffff 0%, #aee7ff 35%, #b9f4b3 78%, #ffffff 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-      }
-
-      .hero p {
-        max-width: 680px;
-        margin: 24px 0 0;
-        color: rgba(255, 255, 255, 0.72);
-        font-size: clamp(1rem, 2vw, 1.25rem);
-        line-height: 1.75;
-      }
-
-      .actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 14px;
-        margin-top: 32px;
+      .nav a:hover {
+        color: var(--eco-blue);
       }
 
       .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        border-radius: 18px;
-        padding: 15px 20px;
-        font-weight: 800;
-        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-      }
-
-      .btn:hover {
-        transform: translateY(-2px);
+        gap: 8px;
+        border-radius: 999px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
       }
 
       .btn-primary {
-        background: linear-gradient(135deg, var(--eco-blue), var(--eco-green));
-        box-shadow: 0 20px 48px rgba(20, 141, 204, 0.28), 0 18px 42px rgba(67, 170, 53, 0.16);
+        background: var(--eco-blue);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 158, 227, 0.25);
+      }
+
+      .btn-primary:hover {
+        background: var(--eco-blue-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(0, 158, 227, 0.3);
       }
 
       .btn-secondary {
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        background: rgba(255, 255, 255, 0.06);
-        color: rgba(255, 255, 255, 0.86);
+        background: white;
+        color: var(--eco-blue);
+        border: 1px solid var(--eco-blue);
       }
 
-      .visual {
-        position: relative;
-        min-height: 520px;
+      .btn-secondary:hover {
+        background: var(--eco-blue-light);
       }
 
-      .orb {
-        position: absolute;
-        inset: 8% 4% auto auto;
-        width: min(420px, 86vw);
-        aspect-ratio: 1;
-        border-radius: 50%;
-        background:
-          radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.96) 0 13%, transparent 14%),
-          conic-gradient(from 130deg, rgba(20, 141, 204, 0.96), rgba(67, 170, 53, 0.9), rgba(20, 141, 204, 0.96));
-        filter: drop-shadow(0 0 70px rgba(20, 141, 204, 0.28));
-        opacity: 0.92;
-        animation: float 5.8s ease-in-out infinite;
+      .btn-green {
+        background: var(--eco-green);
+        color: white;
+        box-shadow: 0 4px 12px rgba(67, 176, 42, 0.25);
       }
 
-      .orb::before,
-      .orb::after {
-        content: "";
-        position: absolute;
-        inset: 12%;
-        border: 1px solid rgba(255, 255, 255, 0.34);
-        border-radius: 50%;
+      .btn-green:hover {
+        background: #369124;
+        transform: translateY(-1px);
       }
 
-      .orb::after {
-        inset: -9%;
-        border-color: rgba(20, 141, 204, 0.36);
-        box-shadow: inset 0 0 40px rgba(67, 170, 53, 0.16), 0 0 55px rgba(20, 141, 204, 0.22);
+      /* Hero */
+      .hero {
+        background: linear-gradient(180deg, var(--bg-soft) 0%, var(--bg) 100%);
+        padding: 80px 0 100px;
       }
 
-      .floating-card {
-        position: absolute;
-        width: min(360px, 82vw);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 28px;
-        padding: 22px;
-        background: rgba(6, 21, 34, 0.72);
-        box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
-        backdrop-filter: blur(18px);
-      }
-
-      .card-a {
-        left: 0;
-        bottom: 76px;
-      }
-
-      .card-b {
-        right: 0;
-        top: 0;
-      }
-
-      .floating-card small {
-        color: rgba(255, 255, 255, 0.56);
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-      }
-
-      .floating-card strong {
-        display: block;
-        margin-top: 10px;
-        font-size: 1.35rem;
-      }
-
-      .floating-card p {
-        margin: 10px 0 0;
-        font-size: 0.95rem;
-        line-height: 1.5;
-      }
-
-      .metrics {
+      .hero-inner {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        margin-top: 28px;
+        grid-template-columns: 1fr 1fr;
+        gap: 64px;
+        align-items: center;
       }
 
-      .metric {
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 22px;
-        padding: 18px;
-        background: rgba(255, 255, 255, 0.05);
+      .hero-content {
+        max-width: 560px;
       }
 
-      .metric strong {
-        display: block;
-        color: #d8ffd5;
-        font-size: 1.6rem;
+      .hero-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--eco-blue-light);
+        color: var(--eco-blue-dark);
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 24px;
       }
 
-      .metric span {
-        color: rgba(255, 255, 255, 0.62);
-        font-size: 0.9rem;
+      .hero-tag svg {
+        width: 16px;
+        height: 16px;
       }
 
-      .section {
-        padding: 68px 0;
-      }
-
-      .section-title {
-        max-width: 760px;
-      }
-
-      .section-title span {
-        color: #9fe8ff;
+      .hero h1 {
+        font-size: clamp(2.5rem, 5vw, 3.8rem);
         font-weight: 800;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
+        line-height: 1.1;
+        color: var(--text);
+        margin: 0 0 24px;
+        letter-spacing: -0.03em;
       }
 
-      .section-title h2 {
-        margin: 12px 0 0;
-        font-size: clamp(2rem, 4vw, 3.6rem);
-        line-height: 1.04;
-        letter-spacing: -0.04em;
+      .hero h1 span {
+        color: var(--eco-blue);
       }
 
-      .cards {
+      .hero p {
+        font-size: 1.15rem;
+        color: var(--text-light);
+        margin: 0 0 32px;
+        line-height: 1.7;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .hero-visual {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-card {
+        background: white;
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 95, 140, 0.1);
+        border: 1px solid var(--border);
+        max-width: 420px;
+        width: 100%;
+      }
+
+      .hero-card-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: var(--eco-green-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .hero-card-icon svg {
+        width: 32px;
+        height: 32px;
+        color: var(--eco-green);
+      }
+
+      .hero-card h3 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0 0 12px;
+        color: var(--text);
+      }
+
+      .hero-card p {
+        font-size: 1rem;
+        color: var(--text-light);
+        margin: 0;
+      }
+
+      .hero-features {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .hero-feature {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.95rem;
+        color: var(--text-light);
+      }
+
+      .hero-feature svg {
+        width: 20px;
+        height: 20px;
+        color: var(--eco-green);
+        flex-shrink: 0;
+      }
+
+      /* Services */
+      .services {
+        padding: 80px 0;
+      }
+
+      .section-header {
+        text-align: center;
+        max-width: 640px;
+        margin: 0 auto 56px;
+      }
+
+      .section-header h2 {
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        font-weight: 800;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+
+      .section-header p {
+        font-size: 1.1rem;
+        color: var(--text-light);
+        margin: 0;
+      }
+
+      .services-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 18px;
-        margin-top: 32px;
+        gap: 24px;
       }
 
       .service-card {
-        position: relative;
-        overflow: hidden;
-        min-height: 260px;
-        border: 1px solid rgba(255, 255, 255, 0.13);
-        border-radius: 30px;
-        padding: 26px;
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035));
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 32px;
+        transition: all 0.2s ease;
       }
 
-      .service-card::after {
-        content: "";
-        position: absolute;
-        width: 150px;
-        height: 150px;
-        right: -54px;
-        bottom: -54px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(67, 170, 53, 0.42), transparent 68%);
+      .service-card:hover {
+        border-color: var(--eco-blue);
+        box-shadow: 0 12px 32px rgba(0, 158, 227, 0.1);
+        transform: translateY(-4px);
       }
 
-      .icon {
-        display: grid;
-        place-items: center;
-        width: 54px;
-        height: 54px;
-        border-radius: 18px;
-        color: white;
-        background: linear-gradient(135deg, var(--eco-blue), var(--eco-green));
-        box-shadow: 0 18px 38px rgba(20, 141, 204, 0.18);
+      .service-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .service-icon.blue {
+        background: var(--eco-blue-light);
+        color: var(--eco-blue);
+      }
+
+      .service-icon.green {
+        background: var(--eco-green-light);
+        color: var(--eco-green);
+      }
+
+      .service-icon svg {
+        width: 28px;
+        height: 28px;
       }
 
       .service-card h3 {
-        margin: 24px 0 0;
-        font-size: 1.35rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 0 0 12px;
+        color: var(--text);
       }
 
       .service-card p {
-        color: rgba(255, 255, 255, 0.66);
-        line-height: 1.65;
-      }
-
-      .cta-panel {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 28px;
-        align-items: center;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 34px;
-        padding: clamp(28px, 5vw, 48px);
-        background:
-          linear-gradient(135deg, rgba(20, 141, 204, 0.18), rgba(67, 170, 53, 0.16)),
-          rgba(255, 255, 255, 0.06);
-        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.26);
-      }
-
-      .cta-panel h2 {
+        font-size: 0.95rem;
+        color: var(--text-light);
         margin: 0;
-        font-size: clamp(2rem, 4vw, 3.7rem);
-        letter-spacing: -0.05em;
+        line-height: 1.6;
       }
 
-      .cta-panel p {
-        margin: 14px 0 0;
-        max-width: 720px;
-        color: rgba(255, 255, 255, 0.7);
-        line-height: 1.65;
+      /* Info section */
+      .info {
+        background: var(--bg-soft);
+        padding: 80px 0;
       }
 
-      footer {
-        padding: 36px 0 48px;
-        color: rgba(255, 255, 255, 0.58);
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 64px;
+        align-items: center;
+      }
+
+      .info-content h2 {
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        font-weight: 800;
+        color: var(--text);
+        margin: 0 0 24px;
+      }
+
+      .info-content p {
+        font-size: 1.05rem;
+        color: var(--text-light);
+        margin: 0 0 24px;
+        line-height: 1.7;
+      }
+
+      .info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .info-item svg {
+        width: 24px;
+        height: 24px;
+        color: var(--eco-green);
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .info-item strong {
+        display: block;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .info-item span {
+        color: var(--text-light);
+        font-size: 0.95rem;
+      }
+
+      .info-visual {
+        background: white;
+        border-radius: 24px;
+        padding: 48px;
+        box-shadow: 0 20px 60px rgba(0, 95, 140, 0.08);
+        border: 1px solid var(--border);
+      }
+
+      .info-visual h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0 0 24px;
+        color: var(--text);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+
+      .stat {
         text-align: center;
+        padding: 24px;
+        border-radius: 16px;
       }
 
+      .stat.blue {
+        background: var(--eco-blue-light);
+      }
+
+      .stat.green {
+        background: var(--eco-green-light);
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .stat span {
+        font-size: 0.9rem;
+        color: var(--text-light);
+      }
+
+      /* CTA */
+      .cta {
+        padding: 80px 0;
+      }
+
+      .cta-inner {
+        background: linear-gradient(135deg, var(--eco-blue) 0%, var(--eco-blue-dark) 100%);
+        border-radius: 32px;
+        padding: 64px;
+        text-align: center;
+        color: white;
+      }
+
+      .cta-inner h2 {
+        font-size: clamp(1.8rem, 3vw, 2.6rem);
+        font-weight: 800;
+        margin: 0 0 16px;
+      }
+
+      .cta-inner p {
+        font-size: 1.15rem;
+        opacity: 0.95;
+        max-width: 560px;
+        margin: 0 auto 32px;
+      }
+
+      .cta-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px;
+      }
+
+      .cta-inner .btn-secondary {
+        border-color: white;
+        color: white;
+        background: transparent;
+      }
+
+      .cta-inner .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      /* WhatsApp float */
       .whatsapp-float {
         position: fixed;
-        right: 22px;
-        bottom: 22px;
-        z-index: 20;
+        right: 24px;
+        bottom: 24px;
+        z-index: 100;
         display: inline-flex;
         align-items: center;
         gap: 12px;
-        border-radius: 999px;
-        padding: 14px 18px 14px 14px;
+        background: #25D366;
         color: white;
-        background: linear-gradient(135deg, #25d366, var(--eco-green));
-        box-shadow: 0 22px 52px rgba(37, 211, 102, 0.36), 0 0 0 10px rgba(37, 211, 102, 0.12);
-        font-weight: 900;
-        animation: callout 1.9s ease-in-out infinite;
+        padding: 14px 20px;
+        border-radius: 999px;
+        box-shadow: 0 8px 24px rgba(37, 211, 102, 0.35);
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+
+      .whatsapp-float:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(37, 211, 102, 0.45);
       }
 
       .whatsapp-float svg {
-        width: 30px;
-        height: 30px;
+        width: 24px;
+        height: 24px;
       }
 
-      .whatsapp-float span {
-        display: block;
-        font-size: 0.78rem;
+      /* Footer */
+      .footer {
+        background: var(--bg-soft);
+        border-top: 1px solid var(--border);
+        padding: 48px 0 24px;
+      }
+
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 48px;
+        margin-bottom: 48px;
+      }
+
+      .footer-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .footer-brand img {
+        width: 48px;
+        height: 48px;
+      }
+
+      .footer-brand strong {
+        font-size: 1.2rem;
+        font-weight: 800;
+      }
+
+      .footer-col p {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      .footer-col h4 {
+        font-size: 0.95rem;
         font-weight: 700;
-        opacity: 0.82;
+        color: var(--text);
+        margin: 0 0 16px;
       }
 
-      .whatsapp-float strong {
+      .footer-col a {
         display: block;
-        line-height: 1.1;
+        font-size: 0.9rem;
+        color: var(--text-light);
+        margin-bottom: 10px;
+        transition: color 0.2s;
       }
 
-      @keyframes float {
-        0%, 100% { transform: translateY(0) rotate(0deg); }
-        50% { transform: translateY(18px) rotate(2deg); }
+      .footer-col a:hover {
+        color: var(--eco-blue);
       }
 
-      @keyframes callout {
-        0%, 100% { transform: translateY(0) scale(1); }
-        50% { transform: translateY(-4px) scale(1.025); }
+      .footer-bottom {
+        border-top: 1px solid var(--border);
+        padding-top: 24px;
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--text-light);
       }
 
-      @media (max-width: 920px) {
+      /* Mobile */
+      @media (max-width: 1024px) {
+        .hero-inner,
+        .info-grid,
+        .footer-grid {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        .services-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
         .nav {
-          align-items: flex-start;
-          flex-direction: column;
+          display: none;
         }
 
-        .nav-links {
-          width: 100%;
-          overflow-x: auto;
-          padding-bottom: 4px;
-        }
-
-        .hero,
-        .cta-panel {
-          grid-template-columns: 1fr;
-        }
-
-        .visual {
-          min-height: 430px;
-        }
-
-        .cards,
-        .metrics {
-          grid-template-columns: 1fr;
-        }
-
-        .card-b {
-          right: 0;
-          top: 24px;
-        }
-
-        .card-a {
-          bottom: 24px;
+        .cta-inner {
+          padding: 40px 24px;
         }
       }
 
-      @media (max-width: 560px) {
-        .shell {
-          width: min(100% - 22px, 1180px);
+      @media (max-width: 640px) {
+        .services-grid {
+          grid-template-columns: 1fr;
         }
 
-        .brand img {
-          width: 56px;
-          height: 56px;
+        .stats {
+          grid-template-columns: 1fr;
         }
 
         .hero {
-          padding-top: 28px;
+          padding: 48px 0 64px;
         }
 
-        .floating-card {
-          position: relative;
-          inset: auto;
-          margin: 16px 0;
-          width: 100%;
-        }
-
-        .orb {
-          position: relative;
-          inset: auto;
-          margin: 12px auto 0;
-          width: min(300px, 86vw);
-        }
-
-        .visual {
-          min-height: auto;
+        .hero-card {
+          padding: 28px;
         }
 
         .whatsapp-float {
-          right: 14px;
-          bottom: 14px;
-          max-width: calc(100% - 28px);
-          padding-right: 16px;
+          right: 16px;
+          bottom: 16px;
+          padding: 12px 16px;
+        }
+
+        .whatsapp-float span {
+          display: none;
         }
       }
     </style>
   </head>
   <body>
-    <header class="shell nav">
-      <a class="brand" href="#inicio" aria-label="Inicio Ecoalfa">
-        <img src="./assets/ecoalfa-logo.svg" alt="Logo Ecoalfa" />
-        <span>
-          <strong>Ecoalfa</strong>
-          <span>Su salud es lo más importante</span>
-        </span>
-      </a>
-      <nav class="nav-links" aria-label="Navegación principal">
-        <a href="#servicios">Servicios</a>
-        <a href="./citas.html">Portal pacientes</a>
-        <a href="./index.html">Ingresar al sistema</a>
-      </nav>
+    <header class="header">
+      <div class="container header-inner">
+        <a href="./landing.html" class="brand">
+          <img src="./assets/ecoalfa-logo.jpeg" alt="Ecoalfa" />
+          <div class="brand-text">
+            <strong>ECOALFA</strong>
+            <span>su salud es lo más importante</span>
+          </div>
+        </a>
+        <nav class="nav">
+          <a href="#servicios">Servicios</a>
+          <a href="#nosotros">Nosotros</a>
+          <a href="#contacto">Contacto</a>
+          <a href="./citas.html" class="btn btn-primary">Ingresar</a>
+        </nav>
+      </div>
     </header>
 
-    <main id="inicio" class="shell">
+    <main>
       <section class="hero">
-        <div>
-          <div class="eyebrow"><span class="pulse"></span> Atención en Colombia · hora Bogotá</div>
-          <h1><span class="gradient-text">Medicina homeopática</span> con experiencia humana y tecnología moderna.</h1>
-          <p>
-            En Ecoalfa te acompañamos con una atención cercana, clara y personalizada. Agenda tu cita, resuelve tus dudas y recibe orientación pensada para tu bienestar.
-          </p>
-          <div class="actions">
-            <a class="btn btn-primary" href="https://wa.me/573228971484?text=Hola%20Ecoalfa%2C%20quiero%20agendar%20una%20cita" target="_blank" rel="noopener noreferrer">Quiero agendar por WhatsApp</a>
-            <a class="btn btn-secondary" href="./citas.html">Entrar al portal de pacientes</a>
+        <div class="container hero-inner">
+          <div class="hero-content">
+            <div class="hero-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3v18M5 10h14M7 16h10"/>
+                <path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
+              </svg>
+              Medicina homeopática en Colombia
+            </div>
+            <h1>
+              Tu salud en las <span>mejores manos</span>
+            </h1>
+            <p>
+              En Ecoalfa te acompañamos con una atención cercana, clara y personalizada.
+              Agenda tu cita, resuelve tus dudas y recibe orientación pensada para tu bienestar.
+            </p>
+            <div class="hero-actions">
+              <a href="https://wa.me/573228971484?text=Hola%20Ecoalfa%2C%20quiero%20agendar%20una%20cita" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M17.6 6.32A7.85 7.85 0 0 0 12 4a7.94 7.94 0 0 0-7.94 7.94c0 1.4.36 2.73 1.03 3.91L4 20l4.26-1.12A7.95 7.95 0 0 0 20 11.94c0-2.18-.88-4.16-2.4-5.62z"/>
+                </svg>
+                Agendar por WhatsApp
+              </a>
+              <a href="./citas.html" class="btn btn-secondary">Ingresar al portal</a>
+            </div>
           </div>
-          <div class="metrics" aria-label="Beneficios Ecoalfa">
-            <div class="metric"><strong>CO</strong><span>Atención pensada para Colombia</span></div>
-            <div class="metric"><strong>24/7</strong><span>Solicitud de cita desde el portal</span></div>
-            <div class="metric"><strong>1 clic</strong><span>Contacto directo por WhatsApp</span></div>
+          <div class="hero-visual">
+            <div class="hero-card">
+              <div class="hero-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+              </div>
+              <h3>Atención personalizada</h3>
+              <p>Médicos especializados en medicina homeopática, listos para escucharte y orientarte.</p>
+              <div class="hero-features">
+                <div class="hero-feature">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                  Citas presenciales y virtuales
+                </div>
+                <div class="hero-feature">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                  Historia clínica digital
+                </div>
+                <div class="hero-feature">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                  Atención con hora Bogotá
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div class="visual" aria-hidden="true">
-          <div class="orb"></div>
-          <article class="floating-card card-b">
-            <small>Agenda inteligente</small>
-            <strong>Citas coordinadas con zona horaria Bogotá</strong>
-            <p>Una experiencia simple para pacientes y equipo médico, evitando confusiones de fecha y hora.</p>
-          </article>
-          <article class="floating-card card-a">
-            <small>Atención cercana</small>
-            <strong>Escríbenos al 322 897 1484</strong>
-            <p>Haz clic en el botón de WhatsApp y cuéntanos cómo podemos ayudarte hoy.</p>
-          </article>
         </div>
       </section>
 
-      <section id="servicios" class="section">
-        <div class="section-title">
-          <span>Experiencia Ecoalfa</span>
-          <h2>Una página moderna para una atención confiable, rápida y conectada.</h2>
-        </div>
-        <div class="cards">
-          <article class="service-card">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-4.4 7-11a7 7 0 1 0-14 0c0 6.6 7 11 7 11Z"/><path d="M9 10h6M12 7v6"/></svg>
+      <section id="servicios" class="services">
+        <div class="container">
+          <div class="section-header">
+            <h2>Nuestros servicios</h2>
+            <p>Soluciones de salud pensadas para ti y tu familia, con tecnología y calidad humana.</p>
+          </div>
+          <div class="services-grid">
+            <div class="service-card">
+              <div class="service-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 21s7-4.4 7-11a7 7 0 1 0-14 0c0 6.6 7 11 7 11Z"/>
+                  <path d="M9 10h6M12 7v6"/>
+                </svg>
+              </div>
+              <h3>Consulta homeopática</h3>
+              <p>Atención integral, escucha activa y acompañamiento para orientar tu proceso de salud.</p>
             </div>
-            <h3>Consulta homeopática</h3>
-            <p>Atención integral, escucha activa y acompañamiento para orientar tu proceso de salud.</p>
-          </article>
-          <article class="service-card">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="3"/><path d="m8 15 2.5 2.5L16 12"/></svg>
+            <div class="service-card">
+              <div class="service-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 2v4M16 2v4M3 10h18"/>
+                  <rect x="3" y="4" width="18" height="18" rx="3"/>
+                  <path d="m8 15 2.5 2.5L16 12"/>
+                </svg>
+              </div>
+              <h3>Agenda fácil</h3>
+              <p>Solicita tu cita desde el portal o escríbenos por WhatsApp para recibir orientación inmediata.</p>
             </div>
-            <h3>Agenda fácil</h3>
-            <p>Solicita tu cita desde el portal o escríbenos por WhatsApp para recibir orientación inmediata.</p>
-          </article>
-          <article class="service-card">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M5 8h14M7 16h10"/><path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg>
+            <div class="service-card">
+              <div class="service-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 3v18M5 8h14M7 16h10"/>
+                  <path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
+                </svg>
+              </div>
+              <h3>Historia clínica</h3>
+              <p>Registro organizado de tus consultas para mantener continuidad y claridad en tu atención.</p>
             </div>
-            <h3>Historia clínica</h3>
-            <p>Registro organizado de tus consultas para mantener continuidad y claridad en tu atención.</p>
-          </article>
+            <div class="service-card">
+              <div class="service-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/>
+                </svg>
+              </div>
+              <h3>Prescripción médica</h3>
+              <p>Recibe tu fórmula médica de forma clara, con indicaciones y seguimiento profesional.</p>
+            </div>
+            <div class="service-card">
+              <div class="service-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <h3>Atención oportuna</h3>
+              <p>Trabajamos con hora Bogotá para que tu cita, recordatorios y atención estén siempre sincronizados.</p>
+            </div>
+            <div class="service-card">
+              <div class="service-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+              <h3>Acompañamiento continuo</h3>
+              <p>Estamos conectados por WhatsApp para resolver tus dudas y guiarte en tu bienestar.</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="section">
-        <div class="cta-panel">
-          <div>
-            <h2>Da el primer paso hacia tu bienestar.</h2>
-            <p>Estamos en Colombia y trabajamos con hora Bogotá para que tus citas, recordatorios y atención médica estén alineados correctamente.</p>
+      <section id="nosotros" class="info">
+        <div class="container info-grid">
+          <div class="info-content">
+            <h2>Por qué elegir Ecoalfa</h2>
+            <p>
+              Combinamos experiencia médica con tecnología moderna para ofrecerte una experiencia
+              de salud simple, humana y confiable. Nuestro compromiso es tu bienestar y el de tu familia.
+            </p>
+            <div class="info-list">
+              <div class="info-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                <div>
+                  <strong>Medicina homeopática especializada</strong>
+                  <span>Profesionales con enfoque en tu salud integral.</span>
+                </div>
+              </div>
+              <div class="info-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                <div>
+                  <strong>Procesos digitales</strong>
+                  <span>Agenda, historia clínica y facturación en un solo lugar.</span>
+                </div>
+              </div>
+              <div class="info-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                <div>
+                  <strong>Atención en Colombia</strong>
+                  <span>Zona horaria Bogotá y canales de comunicación claros.</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <a class="btn btn-primary" href="https://wa.me/573228971484?text=Hola%20Ecoalfa%2C%20necesito%20informaci%C3%B3n%20para%20agendar" target="_blank" rel="noopener noreferrer">Hablar con Ecoalfa</a>
+          <div class="info-visual">
+            <h3>Ecoalfa en cifras</h3>
+            <div class="stats">
+              <div class="stat blue">
+                <strong>CO</strong>
+                <span>Atención pensada para Colombia</span>
+              </div>
+              <div class="stat green">
+                <strong>24/7</strong>
+                <span>Solicitud de citas desde el portal</span>
+              </div>
+              <div class="stat green">
+                <strong>1 clic</strong>
+                <span>Contacto directo por WhatsApp</span>
+              </div>
+              <div class="stat blue">
+                <strong>100%</strong>
+                <span>Compromiso con tu bienestar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="contacto" class="cta">
+        <div class="container">
+          <div class="cta-inner">
+            <h2>Da el primer paso hacia tu bienestar</h2>
+            <p>
+              Estamos en Colombia y trabajamos con hora Bogotá para que tus citas, recordatorios y
+              atención médica estén siempre alineados correctamente.
+            </p>
+            <div class="cta-actions">
+              <a href="https://wa.me/573228971484?text=Hola%20Ecoalfa%2C%20necesito%20informaci%C3%B3n%20para%20agendar" class="btn btn-green" target="_blank" rel="noopener noreferrer">
+                Hablar con Ecoalfa
+              </a>
+              <a href="./citas.html" class="btn btn-secondary">Ingresar al portal</a>
+            </div>
+          </div>
         </div>
       </section>
     </main>
 
-    <footer class="shell">
-      Ecoalfa Medicina Homeopática · Colombia · Zona horaria Bogotá
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <div class="footer-brand">
+              <img src="./assets/ecoalfa-logo.jpeg" alt="Ecoalfa" />
+              <strong>ECOALFA</strong>
+            </div>
+            <p>
+              Medicina homeopática en Colombia. Atención cercana, clara y personalizada para tu bienestar y el de tu familia.
+            </p>
+          </div>
+          <div class="footer-col">
+            <h4>Servicios</h4>
+            <a href="#servicios">Consulta homeopática</a>
+            <a href="#servicios">Agenda de citas</a>
+            <a href="#servicios">Historia clínica</a>
+            <a href="#servicios">Prescripción médica</a>
+          </div>
+          <div class="footer-col">
+            <h4>Enlaces</h4>
+            <a href="#nosotros">Nosotros</a>
+            <a href="#contacto">Contacto</a>
+            <a href="./citas.html">Portal de pacientes</a>
+            <a href="./index.html">Sistema interno</a>
+          </div>
+          <div class="footer-col">
+            <h4>Contacto</h4>
+            <a href="https://wa.me/573228971484" target="_blank" rel="noopener noreferrer">WhatsApp 322 897 1484</a>
+            <a href="#">Colombia · Hora Bogotá</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          © 2026 Ecoalfa Medicina Homeopática. Todos los derechos reservados.
+        </div>
+      </div>
     </footer>
 
-    <a class="whatsapp-float" href="https://wa.me/573228971484?text=Hola%20Ecoalfa%2C%20quiero%20agendar%20mi%20cita" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp de Ecoalfa">
-      <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">
-        <path d="M16.02 3.2A12.7 12.7 0 0 0 5.16 22.5L3.6 28.8l6.43-1.5A12.72 12.72 0 1 0 16.02 3.2Zm0 23.08c-2.1 0-4.05-.62-5.69-1.69l-.4-.25-3.81.89.92-3.72-.26-.42a10.33 10.33 0 1 1 9.24 5.19Zm5.92-7.73c-.32-.16-1.9-.94-2.2-1.05-.3-.11-.52-.16-.74.16-.22.32-.84 1.05-1.03 1.27-.19.22-.38.24-.7.08-.32-.16-1.36-.5-2.6-1.6-.96-.86-1.6-1.92-1.8-2.24-.18-.32-.02-.5.14-.65.14-.14.32-.38.49-.57.16-.19.22-.32.32-.54.11-.22.05-.4-.03-.57-.08-.16-.74-1.78-1.01-2.43-.27-.64-.54-.55-.74-.56h-.63c-.22 0-.57.08-.86.4-.3.32-1.13 1.1-1.13 2.68s1.16 3.12 1.32 3.34c.16.22 2.28 3.48 5.52 4.88.77.33 1.37.53 1.84.68.77.25 1.48.21 2.03.13.62-.09 1.9-.78 2.17-1.53.27-.75.27-1.4.19-1.53-.08-.13-.3-.21-.62-.37Z"/>
+    <a href="https://wa.me/573228971484?text=Hola%20Ecoalfa%2C%20quiero%20agendar%20mi%20cita" class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp de Ecoalfa">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.6 6.32A7.85 7.85 0 0 0 12 4a7.94 7.94 0 0 0-7.94 7.94c0 1.4.36 2.73 1.03 3.91L4 20l4.26-1.12A7.95 7.95 0 0 0 20 11.94c0-2.18-.88-4.16-2.4-5.62z"/>
       </svg>
-      <span><span>Haz clic aquí</span><strong>WhatsApp Ecoalfa</strong></span>
+      <span>WhatsApp</span>
     </a>
   </body>
 </html>

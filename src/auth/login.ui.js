@@ -111,6 +111,21 @@ export function renderLogin(container) {
   });
 }
 
+function getLoginErrorMessage(error) {
+  const messages = {
+    "auth/invalid-email": "El correo no tiene un formato válido.",
+    "auth/user-not-found": "No existe un usuario con este correo en el sistema.",
+    "auth/wrong-password": "La contraseña es incorrecta.",
+    "auth/invalid-credential": "Credenciales inválidas. Verifica correo y contraseña.",
+    "auth/user-disabled": "Este usuario ha sido deshabilitado. Contacta al administrador.",
+    "auth/too-many-requests": "Demasiados intentos fallidos. Espera unos minutos antes de intentar de nuevo.",
+    "auth/network-request-failed": "Error de conexión. Revisa tu internet e intenta de nuevo.",
+    "auth/invalid-api-key": "Error de configuración. Contacta al soporte técnico.",
+    "auth/operation-not-allowed": "El inicio de sesión con correo/contraseña no está habilitado."
+  };
+  return messages[error.code] || error.message || "Error al iniciar sesión. Intenta de nuevo.";
+}
+
 function getResetPasswordErrorMessage(error) {
   const messages = {
     "auth/invalid-email": "El correo no tiene un formato válido.",

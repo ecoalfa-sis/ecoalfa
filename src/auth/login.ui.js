@@ -202,17 +202,3 @@ function initInternalLoginCanvas() {
   window.addEventListener("resize", resize);
   requestAnimationFrame(draw);
 }
-
-function getLoginErrorMessage(error) {
-  const messages = {
-    "auth/invalid-email": "El correo no tiene un formato válido.",
-    "auth/invalid-credential": "Correo o contraseña incorrectos.",
-    "auth/user-not-found": "No existe un usuario con este correo en Firebase Authentication.",
-    "auth/wrong-password": "La contraseña es incorrecta.",
-    "auth/too-many-requests": "Demasiados intentos fallidos. Intenta nuevamente más tarde.",
-    "auth/operation-not-allowed": "El proveedor Email/Password no está habilitado en Firebase Authentication.",
-    "auth/network-request-failed": "No se pudo conectar con Firebase. Revisa internet, dominio autorizado o bloqueos del navegador."
-  };
-
-  return messages[error.code] || `No fue posible iniciar sesión. Código: ${error.code || "desconocido"}`;
-}

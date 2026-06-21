@@ -42,7 +42,7 @@ service cloud.firestore {
       allow read: if signedIn() && (
         request.auth.uid == userId
         || hasFullAccess()
-        || (resource.data.role == 'medico' && resource.data.active == true)
+        || (resource != null && resource.data.role == 'medico' && resource.data.active == true)
       );
       allow create, update, delete: if isAdmin();
     }
@@ -107,7 +107,7 @@ service cloud.firestore {
     }
 
     match /config/{configId} {
-      allow read: if signedIn();
+      allow read: if true;
       allow write: if isAdmin() || isMedico();
     }
 

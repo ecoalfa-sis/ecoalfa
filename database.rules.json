@@ -1,0 +1,16 @@
+{
+  "rules": {
+    ".read": "now < 1781413200000",
+    ".write": "now < 1781413200000",
+    "siteMedia": {
+      "promo": {
+        ".read": true,
+        ".write": "auth != null"
+      },
+      "gallery": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    }
+  }
+}

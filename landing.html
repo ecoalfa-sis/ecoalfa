@@ -1441,6 +1441,7 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
       import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+      import { getDatabase, ref as dbRef, get, child } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyBs85ZtM0tUI5XYypWTze-8xfPJj3EaV5g",
@@ -1454,6 +1455,7 @@
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
+      const rtdb = getDatabase(app);
 
       const DEFAULT_CONFIG = {
         companyName: "Ecoalfa",
@@ -1526,11 +1528,21 @@
       }
 
       async function loadMediaItems() {
-        const snap = await getDocs(collection(db, "siteMedia"));
-        const items = snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+        const fsSnap = await getDocs(collection(db, "siteMedia"));
+        const fsItems = fsSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+
+        const promoRtdbSnap = await get(child(dbRef(rtdb), "siteMedia/promo"));
+        const promoRtdbItems = promoRtdbSnap.exists()
+          ? Object.entries(promoRtdbSnap.val()).map(([id, item]) => ({ id, ...item, source: "rtdb" }))
+          : [];
+        const galleryRtdbSnap = await get(child(dbRef(rtdb), "siteMedia/gallery"));
+        const galleryRtdbItems = galleryRtdbSnap.exists()
+          ? Object.entries(galleryRtdbSnap.val()).map(([id, item]) => ({ id, ...item, source: "rtdb" }))
+          : [];
+
         return {
-          promoItems: items.filter((item) => item.kind === "promo").sort((a, b) => (a.position || 0) - (b.position || 0)),
-          galleryItems: items.filter((item) => item.kind === "gallery").sort((a, b) => (a.position || 0) - (b.position || 0))
+          promoItems: [...fsItems.filter((item) => item.kind === "promo"), ...promoRtdbItems].sort((a, b) => (a.position || 0) - (b.position || 0)),
+          galleryItems: [...fsItems.filter((item) => item.kind === "gallery"), ...galleryRtdbItems].sort((a, b) => (a.position || 0) - (b.position || 0))
         };
       }
 
@@ -1693,10 +1705,9 @@
           if (item.type === "video/youtube") {
             media = `<iframe src="${item.url}?autoplay=1&mute=1&rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
           } else if (item.type?.startsWith("video")) {
-            const videoType = typeof item.url === "string" && item.url.includes("webm") ? "video/webm" : "video/mp4";
             media = `
               <div class="video-wrapper">
-                <video src="${item.url}" poster="${item.poster || ""}" type="${videoType}" controls playsinline preload="metadata" onerror="this.parentElement.classList.add('video-error')"></video>
+                <video src="${item.url}" poster="${item.poster || ""}" controls playsinline preload="metadata" onerror="this.parentElement.classList.add('video-error')"></video>
                 <div class="video-error-overlay">No se puede reproducir este video en este navegador.</div>
               </div>
             `;
@@ -1786,10 +1797,9 @@
           if (item.type === "video/youtube") {
             media = `<iframe src="${item.url}?autoplay=0&rel=0" allow="encrypted-media" allowfullscreen></iframe>`;
           } else if (item.type?.startsWith("video")) {
-            const videoType = typeof item.url === "string" && item.url.includes("webm") ? "video/webm" : "video/mp4";
             media = `
               <div class="video-wrapper">
-                <video src="${item.url}" poster="${item.poster || ""}" type="${videoType}" controls playsinline preload="metadata" onerror="this.parentElement.classList.add('video-error')"></video>
+                <video src="${item.url}" poster="${item.poster || ""}" controls playsinline preload="metadata" onerror="this.parentElement.classList.add('video-error')"></video>
                 <div class="video-error-overlay">No se puede reproducir este video en este navegador.</div>
               </div>
             `;

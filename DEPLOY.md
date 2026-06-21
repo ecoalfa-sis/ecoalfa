@@ -17,7 +17,8 @@
 ```
 
 5. Publica el contenido de `firestore.rules` en Firestore Rules.
-6. Agrega el dominio de GitHub Pages en Authentication > Settings > Authorized domains.
+6. Publica el contenido de `database.rules.json` en Realtime Database Rules.
+7. Agrega el dominio de GitHub Pages en Authentication > Settings > Authorized domains.
 
 ## 2. Subir a GitHub
 

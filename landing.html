@@ -1374,7 +1374,7 @@
               Agenda tu cita, resuelve tus dudas y recibe orientación pensada para tu bienestar.
             </p>
             <div class="hero-actions">
-              <a id="hero-primary-btn" href="https://wa.me/573228971484?text=Hola%20Ecoalfa%2C%20quiero%20agendar%20una%20cita" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+              <a id="hero-primary-btn" href="https://wa.me/573052209603?text=Hola%20Ecoalfa%2C%20quiero%20agendar%20una%20cita" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                   <path d="M17.6 6.32A7.85 7.85 0 0 0 12 4a7.94 7.94 0 0 0-7.94 7.94c0 1.4.36 2.73 1.03 3.91L4 20l4.26-1.12A7.95 7.95 0 0 0 20 11.94c0-2.18-.88-4.16-2.4-5.62z"/>
                 </svg>
@@ -1565,7 +1565,7 @@
               atención médica estén siempre alineados correctamente.
             </p>
             <div class="cta-actions">
-              <a id="cta-primary-btn" href="https://wa.me/573228971484?text=Hola%20Ecoalfa%2C%20necesito%20informaci%C3%B3n%20para%20agendar" class="btn btn-green" target="_blank" rel="noopener noreferrer">
+              <a id="cta-primary-btn" href="https://wa.me/573052209603?text=Hola%20Ecoalfa%2C%20necesito%20informaci%C3%B3n%20para%20agendar" class="btn btn-green" target="_blank" rel="noopener noreferrer">
                 Hablar con Ecoalfa
               </a>
               <a id="cta-secondary-btn" href="./citas.html" class="btn btn-secondary">Ingresar al portal</a>
@@ -1604,7 +1604,7 @@
           </div>
           <div class="footer-col">
             <h4>Contacto</h4>
-            <a id="footer-whatsapp" href="https://wa.me/573228971484" target="_blank" rel="noopener noreferrer">WhatsApp 322 897 1484</a>
+            <a id="footer-whatsapp" href="https://wa.me/573052209603" target="_blank" rel="noopener noreferrer">WhatsApp 322 897 1484</a>
             <a id="footer-address" href="#">Colombia · Hora Bogotá</a>
           </div>
         </div>
@@ -1614,7 +1614,7 @@
       </div>
     </footer>
 
-    <a id="whatsapp-float" href="https://wa.me/573228971484?text=Hola%20Ecoalfa%2C%20quiero%20agendar%20mi%20cita" class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp de Ecoalfa">
+    <a id="whatsapp-float" href="https://wa.me/573052209603?text=Hola%20Ecoalfa%2C%20quiero%20agendar%20mi%20cita" class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp de Ecoalfa">
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M17.6 6.32A7.85 7.85 0 0 0 12 4a7.94 7.94 0 0 0-7.94 7.94c0 1.4.36 2.73 1.03 3.91L4 20l4.26-1.12A7.95 7.95 0 0 0 20 11.94c0-2.18-.88-4.16-2.4-5.62z"/>
       </svg>
@@ -1660,7 +1660,7 @@
         companyName: "Ecoalfa",
         slogan: "su salud es lo más importante",
         phone: "322 897 1484",
-        whatsappNumber: "573228971484",
+        whatsappNumber: "573052209603",
         email: "",
         address: "Colombia",
         timezone: "Bogotá",
@@ -1678,7 +1678,7 @@
         plansSectionTitle: "Nuestros planes",
         plansSectionDescription: "Elige el plan que se ajuste a tus necesidades y comienza a cuidar tu salud.",
         plansButtonText: "Afiliarme",
-        plansWhatsAppNumber: "573228971484",
+        plansWhatsAppNumber: "573052209603",
         plansWhatsAppMessage: "Hola, quiero conocer más sobre el plan",
         plans: [
           {
@@ -1726,22 +1726,12 @@
           console.warn("No se pudieron cargar los medios:", error);
         }
 
-        try {
-          applyConfig(config);
-          await setupPromoModal(config);
-          await setupGallery(config);
-          await setupHeroCarousel();
-          initFloatingVideoThumb();
-          setupPlans(config);
-        } catch (error) {
-          console.error("Error aplicando configuración:", error);
-          applyConfig(DEFAULT_CONFIG);
-          await setupPromoModal(DEFAULT_CONFIG);
-          await setupGallery(DEFAULT_CONFIG);
-          await setupHeroCarousel();
-          initFloatingVideoThumb();
-          setupPlans(DEFAULT_CONFIG);
-        }
+        try { applyConfig(config); } catch (error) { console.error("Error en applyConfig:", error); }
+        try { await setupPromoModal(config); } catch (error) { console.error("Error en setupPromoModal:", error); }
+        try { await setupGallery(config); } catch (error) { console.error("Error en setupGallery:", error); }
+        try { await setupHeroCarousel(); } catch (error) { console.error("Error en setupHeroCarousel:", error); }
+        try { initFloatingVideoThumb(); } catch (error) { console.error("Error en initFloatingVideoThumb:", error); }
+        try { setupPlans(config); } catch (error) { console.error("Error en setupPlans:", error); }
       }
 
       async function loadMediaItems() {
@@ -2134,10 +2124,15 @@
         const card = document.getElementById("hero-card");
         if (!slider || !dots || !card) return;
 
-        const rtdbSnap = await get(child(dbRef(rtdb), "siteMedia/hero"));
-        heroMediaItems = rtdbSnap.exists()
-          ? Object.entries(rtdbSnap.val()).map(([id, item]) => ({ id, ...item, source: "rtdb" })).sort((a, b) => (a.position || 0) - (b.position || 0))
-          : [];
+        heroMediaItems = [];
+        try {
+          const rtdbSnap = await get(child(dbRef(rtdb), "siteMedia/hero"));
+          heroMediaItems = rtdbSnap.exists()
+            ? Object.entries(rtdbSnap.val()).map(([id, item]) => ({ id, ...item, source: "rtdb" })).sort((a, b) => (a.position || 0) - (b.position || 0))
+            : [];
+        } catch (error) {
+          console.warn("Error leyendo hero de RTDB:", error);
+        }
 
         if (!heroMediaItems.length) return;
 

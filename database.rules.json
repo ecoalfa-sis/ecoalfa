@@ -10,6 +10,10 @@
       "gallery": {
         ".read": true,
         ".write": "auth != null"
+      },
+      "hero": {
+        ".read": true,
+        ".write": "auth != null"
       }
     }
   }

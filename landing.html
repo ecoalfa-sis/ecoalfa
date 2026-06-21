@@ -126,6 +126,101 @@
         transform: scale(1.05);
       }
 
+      .promo-minimize {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        z-index: 10;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.85);
+        color: var(--text);
+        font-size: 1.4rem;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.2s ease;
+      }
+
+      .promo-minimize:hover {
+        background: white;
+        transform: scale(1.05);
+      }
+
+      .promo-floating-thumb {
+        position: fixed;
+        bottom: 92px;
+        left: 16px;
+        width: 120px;
+        height: 120px;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        background: white;
+        z-index: 999;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .promo-floating-thumb.active {
+        display: flex;
+      }
+
+      .promo-floating-thumb img,
+      .promo-floating-thumb video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .promo-floating-thumb .promo-floating-label {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 6px 8px;
+        background: rgba(0, 0, 0, 0.55);
+        color: white;
+        font-size: 0.75rem;
+        text-align: center;
+        backdrop-filter: blur(4px);
+      }
+
+      .promo-floating-close {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(0, 0, 0, 0.65);
+        color: white;
+        font-size: 1rem;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      @media (max-width: 480px) {
+        .promo-floating-thumb {
+          width: 100px;
+          height: 100px;
+          bottom: 84px;
+          left: 12px;
+        }
+      }
+
       .promo-slider {
         position: relative;
         width: 100%;
@@ -416,13 +511,77 @@
       }
 
       .hero-card {
+        position: relative;
+        overflow: hidden;
         background: white;
         border-radius: 24px;
-        padding: 40px;
         box-shadow: 0 20px 60px rgba(0, 95, 140, 0.1);
         border: 1px solid var(--border);
         max-width: 420px;
         width: 100%;
+        aspect-ratio: 1 / 1;
+      }
+
+      .hero-card-fallback {
+        position: absolute;
+        inset: 0;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .hero-card.has-media .hero-card-fallback {
+        display: none;
+      }
+
+      .hero-card-slider {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .hero-card-slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.6s ease-in-out;
+        pointer-events: none;
+      }
+
+      .hero-card-slide.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .hero-card-slide img,
+      .hero-card-slide video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .hero-card-dots {
+        position: absolute;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        z-index: 10;
+      }
+
+      .hero-card-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .hero-card-dot.active {
+        background: var(--eco-green);
       }
 
       .hero-card-icon {
@@ -722,6 +881,56 @@
 
       .video-error video {
         pointer-events: none;
+      }
+
+      .floating-video-thumb {
+        position: fixed;
+        bottom: 92px;
+        right: 16px;
+        width: 180px;
+        aspect-ratio: 16 / 9;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+        background: #000;
+        z-index: 999;
+        cursor: pointer;
+        display: none;
+      }
+
+      .floating-video-thumb.active {
+        display: block;
+      }
+
+      .floating-video-thumb video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 14px;
+      }
+
+      .floating-video-thumb span {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.55);
+        color: white;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      @media (max-width: 480px) {
+        .floating-video-thumb {
+          width: 140px;
+          bottom: 84px;
+          right: 12px;
+        }
       }
 
       .gallery-nav {
@@ -1195,34 +1404,38 @@
             </div>
           </div>
           <div class="hero-visual">
-            <div class="hero-card">
-              <div class="hero-card-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
+            <div class="hero-card" id="hero-card">
+              <div class="hero-card-fallback" id="hero-card-fallback">
+                <div class="hero-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                  </svg>
+                </div>
+                <h3>Atención personalizada</h3>
+                <p>Médicos especializados, listos para escucharte y orientarte.</p>
+                <div class="hero-features">
+                  <div class="hero-feature">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Citas presenciales y virtuales
+                  </div>
+                  <div class="hero-feature">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Historia clínica digital
+                  </div>
+                  <div class="hero-feature">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Portal de pacientes
+                  </div>
+                </div>
               </div>
-              <h3>Atención personalizada</h3>
-              <p>Médicos especializados, listos para escucharte y orientarte.</p>
-              <div class="hero-features">
-                <div class="hero-feature">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 6L9 17l-5-5"/>
-                  </svg>
-                  Citas presenciales y virtuales
-                </div>
-                <div class="hero-feature">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 6L9 17l-5-5"/>
-                  </svg>
-                  Historia clínica digital
-                </div>
-                <div class="hero-feature">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 6L9 17l-5-5"/>
-                  </svg>
-                  Portal de pacientes
-                </div>
-              </div>
+              <div class="hero-card-slider" id="hero-card-slider"></div>
+              <div class="hero-card-dots" id="hero-card-dots"></div>
             </div>
           </div>
         </div>
@@ -1429,13 +1642,19 @@
     </a>
 
     <div id="promo-modal" class="promo-modal hidden" role="dialog" aria-modal="true">
-      <div class="promo-modal-content">
+      <div class="promo-modal-content" id="promo-modal-content">
         <button id="promo-close" class="promo-close" aria-label="Cerrar">×</button>
+        <button id="promo-minimize" class="promo-minimize" aria-label="Minimizar">−</button>
         <div class="promo-slider" id="promo-slider"></div>
         <button class="promo-nav prev" id="promo-prev" aria-label="Anterior">‹</button>
         <button class="promo-nav next" id="promo-next" aria-label="Siguiente">›</button>
         <div class="promo-controls" id="promo-dots"></div>
       </div>
+    </div>
+
+    <div id="promo-floating-thumb" class="promo-floating-thumb">
+      <button class="promo-floating-close" aria-label="Cerrar promoción">×</button>
+      <div class="promo-floating-label">Promoción</div>
     </div>
 
     <script type="module">
@@ -1517,12 +1736,16 @@
           applyConfig(config);
           await setupPromoModal(config);
           await setupGallery(config);
+          await setupHeroCarousel();
+          initFloatingVideoThumb();
           setupPlans(config);
         } catch (error) {
           console.error("No se pudo cargar la configuración del sitio", error);
           applyConfig(DEFAULT_CONFIG);
           await setupPromoModal(DEFAULT_CONFIG);
           await setupGallery(DEFAULT_CONFIG);
+          await setupHeroCarousel();
+          initFloatingVideoThumb();
           setupPlans(DEFAULT_CONFIG);
         }
       }
@@ -1699,6 +1922,7 @@
         const modal = document.getElementById("promo-modal");
         const slider = document.getElementById("promo-slider");
         const dots = document.getElementById("promo-dots");
+        const floatingThumb = document.getElementById("promo-floating-thumb");
 
         slider.innerHTML = items.map((item, index) => {
           let media = "";
@@ -1730,6 +1954,7 @@
 
         let currentSlide = 0;
         let interval = null;
+        let isMinimized = false;
 
         function showSlide(index) {
           currentSlide = index;
@@ -1739,6 +1964,7 @@
           dots.querySelectorAll(".promo-dot").forEach((dot, i) => {
             dot.classList.toggle("active", i === index);
           });
+          if (isMinimized) updateFloatingThumb();
         }
 
         function nextSlide() {
@@ -1749,13 +1975,47 @@
           showSlide((currentSlide - 1 + items.length) % items.length);
         }
 
+        function updateFloatingThumb() {
+          const item = items[currentSlide];
+          if (!item) return;
+          floatingThumb.innerHTML = `<div class="promo-floating-label">Promoción</div>`;
+          if (item.type?.startsWith("video")) {
+            floatingThumb.style.backgroundImage = item.poster ? `url(${item.poster})` : "none";
+            floatingThumb.style.backgroundColor = "#000";
+          } else {
+            floatingThumb.style.backgroundImage = `url(${item.url})`;
+            floatingThumb.style.backgroundColor = "white";
+          }
+        }
+
+        function minimizeModal() {
+          modal.classList.add("hidden");
+          document.body.style.overflow = "";
+          if (interval) clearInterval(interval);
+          updateFloatingThumb();
+          floatingThumb.classList.add("active");
+          isMinimized = true;
+        }
+
+        function expandModal() {
+          modal.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+          floatingThumb.classList.remove("active");
+          isMinimized = false;
+          if (config.promoAutoPlay && items.length > 1) {
+            interval = setInterval(nextSlide, config.promoInterval || 5000);
+          }
+        }
+
         function closeModal() {
           modal.classList.add("hidden");
           document.body.style.overflow = "";
           if (interval) clearInterval(interval);
+          floatingThumb.classList.remove("active");
         }
 
-        document.getElementById("promo-close").addEventListener("click", closeModal);
+        document.getElementById("promo-close").addEventListener("click", minimizeModal);
+        document.getElementById("promo-minimize").addEventListener("click", minimizeModal);
         document.getElementById("promo-next").addEventListener("click", nextSlide);
         document.getElementById("promo-prev").addEventListener("click", prevSlide);
 
@@ -1763,8 +2023,21 @@
           dot.addEventListener("click", () => showSlide(Number(dot.dataset.dot)));
         });
 
+        slider.querySelectorAll(".promo-slide img").forEach((img) => {
+          img.addEventListener("click", () => minimizeModal());
+        });
+
         modal.addEventListener("click", (event) => {
           if (event.target === modal) closeModal();
+        });
+
+        floatingThumb.addEventListener("click", (e) => {
+          if (e.target.closest(".promo-floating-close")) {
+            floatingThumb.classList.remove("active");
+            if (interval) clearInterval(interval);
+            return;
+          }
+          expandModal();
         });
 
         if (config.promoAutoPlay && items.length > 1) {
@@ -1840,6 +2113,183 @@
         dots.querySelectorAll(".gallery-dot").forEach((dot) => {
           dot.addEventListener("click", () => showSlide(Number(dot.dataset.galleryDot)));
         });
+      }
+
+      let heroMediaItems = [];
+      let heroCurrentSlide = 0;
+      let heroAutoAdvanceInterval = null;
+
+      async function setupHeroCarousel() {
+        const slider = document.getElementById("hero-card-slider");
+        const dots = document.getElementById("hero-card-dots");
+        const card = document.getElementById("hero-card");
+        if (!slider || !dots || !card) return;
+
+        const rtdbSnap = await get(child(dbRef(rtdb), "siteMedia/hero"));
+        heroMediaItems = rtdbSnap.exists()
+          ? Object.entries(rtdbSnap.val()).map(([id, item]) => ({ id, ...item, source: "rtdb" })).sort((a, b) => (a.position || 0) - (b.position || 0))
+          : [];
+
+        if (!heroMediaItems.length) return;
+
+        card.classList.add("has-media");
+
+        slider.innerHTML = heroMediaItems.map((item, index) => {
+          let media = "";
+          if (item.type?.startsWith("video")) {
+            media = `<video src="${item.url}" poster="${item.poster || ""}" muted loop playsinline preload="metadata" class="hero-card-media"></video>`;
+          } else {
+            media = `<img src="${item.url}" alt="${item.name || ""}" class="hero-card-media" loading="lazy" />`;
+          }
+          return `<div class="hero-card-slide ${index === 0 ? "active" : ""}" data-hero-slide="${index}">${media}</div>`;
+        }).join("");
+
+        dots.innerHTML = heroMediaItems.map((_, index) => `<div class="hero-card-dot ${index === 0 ? "active" : ""}" data-hero-dot="${index}"></div>`).join("");
+
+        dots.querySelectorAll(".hero-card-dot").forEach((dot) => {
+          dot.addEventListener("click", () => {
+            showHeroSlide(Number(dot.dataset.heroDot));
+            resetHeroAutoAdvance();
+          });
+        });
+
+        slider.querySelectorAll("video").forEach((video) => {
+          video.addEventListener("play", () => stopHeroAutoAdvance());
+          video.addEventListener("pause", () => startHeroAutoAdvance());
+          video.addEventListener("ended", () => startHeroAutoAdvance());
+        });
+
+        startHeroAutoAdvance();
+      }
+
+      function showHeroSlide(index) {
+        heroCurrentSlide = index;
+        document.querySelectorAll(".hero-card-slide").forEach((slide, i) => {
+          slide.classList.toggle("active", i === index);
+        });
+        document.querySelectorAll(".hero-card-dot").forEach((dot, i) => {
+          dot.classList.toggle("active", i === index);
+        });
+      }
+
+      function startHeroAutoAdvance() {
+        stopHeroAutoAdvance();
+        if (heroMediaItems.length <= 1) return;
+        heroAutoAdvanceInterval = setInterval(() => {
+          const next = (heroCurrentSlide + 1) % heroMediaItems.length;
+          showHeroSlide(next);
+        }, 5000);
+      }
+
+      function stopHeroAutoAdvance() {
+        if (heroAutoAdvanceInterval) {
+          clearInterval(heroAutoAdvanceInterval);
+          heroAutoAdvanceInterval = null;
+        }
+      }
+
+      function resetHeroAutoAdvance() {
+        showHeroSlide(heroCurrentSlide);
+        startHeroAutoAdvance();
+      }
+
+      let activeFloatingVideo = null;
+      let floatingThumbEl = null;
+      let floatingVideo = null;
+      let ignorePauseEvent = false;
+
+      function initFloatingVideoThumb() {
+        floatingThumbEl = document.createElement("div");
+        floatingThumbEl.className = "floating-video-thumb";
+        floatingThumbEl.innerHTML = `<video muted playsinline preload="metadata"></video><span>×</span>`;
+        document.body.appendChild(floatingThumbEl);
+        floatingVideo = floatingThumbEl.querySelector("video");
+
+        floatingThumbEl.addEventListener("click", (e) => {
+          if (e.target.closest("span")) {
+            hideFloatingVideoThumb();
+            return;
+          }
+          if (activeFloatingVideo && floatingVideo) {
+            const currentTime = floatingVideo.currentTime;
+            hideFloatingVideoThumb();
+            activeFloatingVideo.currentTime = currentTime;
+            activeFloatingVideo.play().then(() => {
+              activeFloatingVideo.scrollIntoView({ behavior: "smooth", block: "center" });
+            }).catch(() => {
+              activeFloatingVideo.scrollIntoView({ behavior: "smooth", block: "center" });
+            });
+          }
+        });
+
+        document.querySelectorAll("video").forEach((video) => {
+          if (video.closest(".hero-card") || video === floatingVideo) return;
+          video.addEventListener("play", () => {
+            activeFloatingVideo = video;
+            checkFloatingVideoVisibility();
+          });
+          video.addEventListener("pause", () => {
+            if (ignorePauseEvent) return;
+            if (activeFloatingVideo === video) {
+              hideFloatingVideoThumb();
+            }
+          });
+        });
+
+        let ticking = false;
+        window.addEventListener("scroll", () => {
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              checkFloatingVideoVisibility();
+              ticking = false;
+            });
+            ticking = true;
+          }
+        }, { passive: true });
+      }
+
+      function checkFloatingVideoVisibility() {
+        if (!activeFloatingVideo || activeFloatingVideo.paused || !floatingVideo) {
+          hideFloatingVideoThumb();
+          return;
+        }
+        const rect = activeFloatingVideo.getBoundingClientRect();
+        const visible = rect.top < window.innerHeight && rect.bottom > 0 && rect.left < window.innerWidth && rect.right > 0;
+        if (visible) {
+          hideFloatingVideoThumb();
+          if (activeFloatingVideo) {
+            activeFloatingVideo.play().catch(() => {});
+          }
+        } else if (!floatingThumbEl.classList.contains("active")) {
+          showFloatingVideoThumb();
+        }
+      }
+
+      function showFloatingVideoThumb() {
+        if (!activeFloatingVideo || !floatingVideo) return;
+        const currentTime = activeFloatingVideo.currentTime;
+        ignorePauseEvent = true;
+        try { activeFloatingVideo.pause(); } catch (err) {}
+        ignorePauseEvent = false;
+        floatingVideo.src = activeFloatingVideo.src;
+        floatingVideo.poster = activeFloatingVideo.poster || "";
+        floatingVideo.onloadedmetadata = () => {
+          floatingVideo.currentTime = currentTime;
+          floatingVideo.play().catch(() => {});
+        };
+        floatingThumbEl.classList.add("active");
+      }
+
+      function hideFloatingVideoThumb() {
+        if (!floatingThumbEl) return;
+        floatingThumbEl.classList.remove("active");
+        if (floatingVideo) {
+          try {
+            floatingVideo.pause();
+            floatingVideo.src = "";
+            floatingVideo.onloadedmetadata = null;
+          } catch (err) {}
+        }
       }
 
       function setupPlans(config) {

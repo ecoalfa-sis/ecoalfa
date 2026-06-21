@@ -36,8 +36,10 @@
       let currentConfig = null;
       let promoMediaItems = [];
       let galleryMediaItems = [];
+      let heroMediaItems = [];
       let pendingPromoFiles = [];
       let pendingGalleryFiles = [];
+      let pendingHeroFiles = [];
 
       const DEFAULT_CONFIG = {
         companyName: "Ecoalfa",
@@ -166,6 +168,7 @@
 
         promoMediaItems = await loadMediaByKind("promo");
         galleryMediaItems = await loadMediaByKind("gallery");
+        heroMediaItems = await loadMediaByKind("hero");
 
         if (promoMediaItems.length === 0 && Array.isArray(currentConfig.promoItems) && currentConfig.promoItems.length) {
           await seedLegacyMedia("promo", currentConfig.promoItems);
@@ -175,9 +178,14 @@
           await seedLegacyMedia("gallery", currentConfig.galleryItems);
           galleryMediaItems = await loadMediaByKind("gallery");
         }
+        if (heroMediaItems.length === 0 && Array.isArray(currentConfig.heroItems) && currentConfig.heroItems.length) {
+          await seedLegacyMedia("hero", currentConfig.heroItems);
+          heroMediaItems = await loadMediaByKind("hero");
+        }
 
         currentConfig.promoItems = promoMediaItems;
         currentConfig.galleryItems = galleryMediaItems;
+        currentConfig.heroItems = heroMediaItems;
       }
 
       async function saveConfig() {
@@ -217,7 +225,7 @@
           }
         }, { merge: true });
 
-        currentConfig = { ...payload, promoItems: promoMediaItems, galleryItems: galleryMediaItems };
+        currentConfig = { ...payload, promoItems: promoMediaItems, galleryItems: galleryMediaItems, heroItems: heroMediaItems };
         showMessage("Configuración guardada correctamente.", "success");
       }
 
@@ -435,6 +443,35 @@
 
                 <div class="space-y-6">
                   <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                    <h2 class="text-lg font-bold text-slate-900">Carrusel principal (Hero)</h2>
+                    <p class="mt-1 text-sm text-slate-500">Imágenes y videos que aparecen en el cuadro principal de la landing, en la sección superior.</p>
+
+                    <div class="mt-5 space-y-4">
+                      <div class="rounded-xl bg-blue-50 p-4 text-sm text-blue-800">
+                        <strong>Tamaño recomendado:</strong> 1080 × 1080 px (cuadrado) o 1920 × 1080 px (Full HD). Máximo 20 MB. El cuadro se muestra cuadrado, pero se adapta con recorte automático.
+                      </div>
+
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">URL de imagen o video</label>
+                        <input id="hero-url" type="text" placeholder="https://..." class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                      </div>
+                      <button id="add-hero-url" class="w-full rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">Agregar por URL</button>
+
+                      <div class="border-t border-slate-200 pt-4">
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">O subir archivo directamente</p>
+                        <div class="mt-2">
+                          <input id="hero-files" type="file" accept="image/*,video/*" multiple class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700" />
+                        </div>
+                        <button id="upload-hero" class="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Subir archivos</button>
+                      </div>
+
+                      <div id="hero-list" class="space-y-3">
+                        ${renderPromoItems(cfg.heroItems, "hero")}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                     <h2 class="text-lg font-bold text-slate-900">Modal publicitario</h2>
                     <p class="mt-1 text-sm text-slate-500">Imágenes y videos que aparecerán en un modal al abrir la landing page.</p>
 
@@ -530,7 +567,7 @@
           } else {
             thumbnail = `<img src="${item.url}" alt="" class="h-16 w-16 rounded-lg object-cover" />`;
           }
-          const removeAttr = listType === "promo" ? "data-remove-promo" : "data-remove-gallery";
+          const removeAttr = listType === "promo" ? "data-remove-promo" : listType === "gallery" ? "data-remove-gallery" : "data-remove-hero";
           return `
             <div class="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
               ${thumbnail}
@@ -551,6 +588,8 @@
         document.getElementById("add-promo-url").addEventListener("click", addPromoUrl);
         document.getElementById("upload-gallery").addEventListener("click", uploadGalleryFiles);
         document.getElementById("add-gallery-url").addEventListener("click", addGalleryUrl);
+        document.getElementById("upload-hero").addEventListener("click", uploadHeroFiles);
+        document.getElementById("add-hero-url").addEventListener("click", addHeroUrl);
 
         document.querySelectorAll("[data-remove-promo]").forEach((button) => {
           button.addEventListener("click", async () => {
@@ -586,12 +625,33 @@
           });
         });
 
+        document.querySelectorAll("[data-remove-hero]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const id = button.dataset.removeHero;
+            if (!id) return;
+            const item = heroMediaItems.find((item) => item.id === id);
+            if (item?.source === "rtdb") {
+              try { await remove(dbRef(rtdb, `siteMedia/hero/${id}`)); } catch (e) { console.warn(e); }
+            } else {
+              await deleteDoc(doc(db, "siteMedia", id));
+            }
+            heroMediaItems = heroMediaItems.filter((item) => item.id !== id);
+            currentConfig.heroItems = heroMediaItems;
+            document.getElementById("hero-list").innerHTML = renderPromoItems(currentConfig.heroItems, "hero");
+            bindAdminEvents();
+          });
+        });
+
         document.getElementById("promo-files").addEventListener("change", (event) => {
           pendingPromoFiles = Array.from(event.target.files);
         });
 
         document.getElementById("gallery-files").addEventListener("change", (event) => {
           pendingGalleryFiles = Array.from(event.target.files);
+        });
+
+        document.getElementById("hero-files").addEventListener("change", (event) => {
+          pendingHeroFiles = Array.from(event.target.files);
         });
       }
 
@@ -675,6 +735,74 @@
         } catch (error) {
           console.error(error);
           const msg = error?.message?.includes("muy grande") ? error.message : "Error subiendo a galería.";
+          showMessage(msg, "error");
+        } finally {
+          button.disabled = false;
+          button.textContent = "Subir archivos";
+        }
+      }
+
+      async function addHeroUrl() {
+        const input = document.getElementById("hero-url");
+        const url = input.value.trim();
+        if (!url || !isValidUrl(url)) {
+          showMessage("Ingresa una URL válida.", "error");
+          return;
+        }
+        const item = buildPromoItemFromUrl(url);
+        const docRef = await addDoc(collection(db, "siteMedia"), {
+          ...item,
+          kind: "hero",
+          position: Date.now()
+        });
+        const saved = { id: docRef.id, ...item, kind: "hero", position: Date.now() };
+        heroMediaItems = [...heroMediaItems, saved];
+        currentConfig.heroItems = heroMediaItems;
+        document.getElementById("hero-list").innerHTML = renderPromoItems(currentConfig.heroItems, "hero");
+        input.value = "";
+        bindAdminEvents();
+        showMessage("URL de carrusel principal agregada.", "success");
+      }
+
+      async function uploadHeroFiles() {
+        if (!pendingHeroFiles.length) {
+          showMessage("Selecciona archivos.", "error");
+          return;
+        }
+        const oversized = pendingHeroFiles.filter((file) => {
+          if (file.type?.startsWith("video")) {
+            return file.size > 20 * 1024 * 1024;
+          }
+          return file.size > 10 * 1024 * 1024;
+        });
+        if (oversized.length > 0) {
+          showMessage("Algunos archivos son muy grandes: imágenes máx 10 MB, videos máx 20 MB.", "error");
+          return;
+        }
+        const button = document.getElementById("upload-hero");
+        button.disabled = true;
+        button.textContent = "Subiendo...";
+        try {
+          const uploads = await Promise.all(
+            pendingHeroFiles.map((file, index) => prepareMediaUpload(file, index, "hero"))
+          );
+          const savedDocs = await Promise.all(
+            uploads.map(async (item) => {
+              const rtdbItemRef = push(dbRef(rtdb, "siteMedia/hero"));
+              await set(rtdbItemRef, { ...item, kind: "hero" });
+              return { id: rtdbItemRef.key, ...item, kind: "hero", source: "rtdb" };
+            })
+          );
+          heroMediaItems = [...heroMediaItems, ...savedDocs];
+          currentConfig.heroItems = heroMediaItems;
+          document.getElementById("hero-list").innerHTML = renderPromoItems(currentConfig.heroItems, "hero");
+          document.getElementById("hero-files").value = "";
+          pendingHeroFiles = [];
+          bindAdminEvents();
+          showMessage("Archivos del carrusel principal guardados.", "success");
+        } catch (error) {
+          console.error(error);
+          const msg = error?.message?.includes("muy grande") ? error.message : "Error subiendo archivos del carrusel principal.";
           showMessage(msg, "error");
         } finally {
           button.disabled = false;

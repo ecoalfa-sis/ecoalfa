@@ -329,7 +329,7 @@ function renderTicket(invoice) {
 
   return `
 ECOALFA
-Medicina Homeopática
+Medicina
 Factura: ${invoice.number}
 Cliente: ${invoice.customerName}
 Pago: ${invoice.paymentType}
@@ -430,7 +430,7 @@ function printLetterInvoice() {
         </table>
 
         <div class="footer">
-          <p>ECOALFA Medicina Homeopática · Colombia · Zona horaria Bogotá</p>
+          <p>ECOALFA Medicina · Colombia · Zona horaria Bogotá</p>
           <p>Gracias por su compra</p>
         </div>
       </body>

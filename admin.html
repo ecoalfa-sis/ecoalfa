@@ -52,7 +52,35 @@
         showPromoModal: true,
         promoAutoPlay: true,
         promoInterval: 5000,
-        promoItems: []
+        promoItems: [],
+        plansSectionTitle: "Nuestros planes",
+        plansSectionDescription: "Elige el plan que se ajuste a tus necesidades y comienza a cuidar tu salud.",
+        plansButtonText: "Afiliarme",
+        plansWhatsAppNumber: "573228971484",
+        plansWhatsAppMessage: "Hola, quiero conocer más sobre el plan",
+        plans: [
+          {
+            id: "gold",
+            name: "Plan Gold",
+            price: "$99.000/mes",
+            description: "Ideal para consultas básicas y acompañamiento mensual.",
+            features: ["1 consulta médica al mes", "Chat de soporte", "Recordatorios de medicación"]
+          },
+          {
+            id: "premium",
+            name: "Plan Premium",
+            price: "$199.000/mes",
+            description: "Atención más completa para ti y tu familia.",
+            features: ["3 consultas médicas al mes", "Chat de soporte prioritario", "Recordatorios de medicación", "Historial clínico digital"]
+          },
+          {
+            id: "platinum",
+            name: "Plan Platinum",
+            price: "$349.000/mes",
+            description: "Cobertura integral con beneficios exclusivos.",
+            features: ["Consultas médicas ilimitadas", "Soporte 24/7", "Recordatorios de medicación", "Historial clínico digital", "Descuentos en medicamentos"]
+          }
+        ]
       };
 
       onAuthStateChanged(auth, async (user) => {
@@ -150,7 +178,13 @@
           showPromoModal: document.getElementById("cfg-showPromoModal").checked,
           promoAutoPlay: document.getElementById("cfg-promoAutoPlay").checked,
           promoInterval: Number(document.getElementById("cfg-promoInterval").value) || 5000,
-          promoItems: currentConfig.promoItems || []
+          promoItems: currentConfig.promoItems || [],
+          plansSectionTitle: document.getElementById("cfg-plansSectionTitle").value.trim(),
+          plansSectionDescription: document.getElementById("cfg-plansSectionDescription").value.trim(),
+          plansButtonText: document.getElementById("cfg-plansButtonText").value.trim(),
+          plansWhatsAppNumber: document.getElementById("cfg-plansWhatsAppNumber").value.trim(),
+          plansWhatsAppMessage: document.getElementById("cfg-plansWhatsAppMessage").value.trim(),
+          plans: readPlansConfig()
         };
 
         const configRef = doc(db, "config", "siteConfig");
@@ -165,6 +199,44 @@
 
         currentConfig = payload;
         showMessage("Configuración guardada correctamente.", "success");
+      }
+
+      function renderPlansConfig(plans) {
+        return (plans || []).map((plan, index) => `
+          <div class="rounded-xl border border-slate-200 p-4">
+            <p class="mb-3 text-sm font-semibold text-slate-700">Plan ${index + 1}</p>
+            <div class="space-y-3">
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600">Nombre del plan</label>
+                <input id="cfg-plan-${index}-name" value="${escapeHtml(plan.name || "")}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600">Precio</label>
+                <input id="cfg-plan-${index}-price" value="${escapeHtml(plan.price || "")}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600">Descripción</label>
+                <input id="cfg-plan-${index}-description" value="${escapeHtml(plan.description || "")}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600">Beneficios (uno por línea)</label>
+                <textarea id="cfg-plan-${index}-features" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">${escapeHtml((plan.features || []).join("\n"))}</textarea>
+              </div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      function readPlansConfig() {
+        const plans = [];
+        for (let i = 0; i < 3; i++) {
+          const name = document.getElementById(`cfg-plan-${i}-name`)?.value.trim() || "";
+          const price = document.getElementById(`cfg-plan-${i}-price`)?.value.trim() || "";
+          const description = document.getElementById(`cfg-plan-${i}-description`)?.value.trim() || "";
+          const features = document.getElementById(`cfg-plan-${i}-features`)?.value.split("\n").map((f) => f.trim()).filter(Boolean) || [];
+          plans.push({ id: currentConfig?.plans?.[i]?.id || `plan-${i + 1}`, name, price, description, features });
+        }
+        return plans;
       }
 
       function renderAdmin() {
@@ -189,7 +261,7 @@
 
             <main class="mx-auto max-w-6xl p-6">
               <div class="mb-6 rounded-2xl bg-blue-50 p-4 text-sm text-blue-800">
-                <strong>Nota importante:</strong> Las imágenes se guardan en Firestore como base64 (máximo 500 KB cada una). Los videos se agregan mediante URL externa (YouTube, etc.) porque requieren mucho espacio.
+                <strong>Nota importante:</strong> Las imágenes y videos se comprimen automáticamente y se guardan en Firestore como base64. No expiran. Para videos de alta calidad o largos, usa URL externa (YouTube, etc.).
               </div>
 
               <div class="grid gap-6 lg:grid-cols-[1fr_420px]">
@@ -264,6 +336,38 @@
                     </div>
                   </div>
 
+                  <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                    <h2 class="text-lg font-bold text-slate-900">Sección de planes</h2>
+                    <p class="mt-1 text-sm text-slate-500">Configura los tres planes y el botón de WhatsApp para ventas.</p>
+                    <div class="mt-5 space-y-4">
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Título de la sección</label>
+                        <input id="cfg-plansSectionTitle" value="${escapeHtml(cfg.plansSectionTitle || "Nuestros planes")}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Descripción de la sección</label>
+                        <textarea id="cfg-plansSectionDescription" rows="2" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">${escapeHtml(cfg.plansSectionDescription || "")}</textarea>
+                      </div>
+                      <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label class="mb-1 block text-sm font-medium text-slate-700">Texto del botón</label>
+                          <input id="cfg-plansButtonText" value="${escapeHtml(cfg.plansButtonText || "Afiliarme")}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                        </div>
+                        <div>
+                          <label class="mb-1 block text-sm font-medium text-slate-700">WhatsApp (número)</label>
+                          <input id="cfg-plansWhatsAppNumber" value="${escapeHtml(cfg.plansWhatsAppNumber || cfg.whatsappNumber || "")}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                        </div>
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Mensaje de WhatsApp</label>
+                        <input id="cfg-plansWhatsAppMessage" value="${escapeHtml(cfg.plansWhatsAppMessage || "Hola, quiero conocer más sobre el plan")}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                      </div>
+                      <div class="grid gap-4 sm:grid-cols-3">
+                        ${renderPlansConfig(cfg.plans)}
+                      </div>
+                    </div>
+                  </div>
+
                   <button id="save-config" class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800">Guardar configuración</button>
                   <p id="admin-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
                 </div>
@@ -299,14 +403,14 @@
                       <button id="add-promo-url" class="w-full rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">Agregar por URL</button>
 
                       <div class="border-t border-slate-200 pt-4">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">O subir imagen directamente</p>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">O subir imagen/video directamente</p>
                         <div class="mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
-                          Máximo 500 KB por imagen. Se guarda en Firestore como base64, no necesita Storage.
+                          Imágenes y videos se comprimen automáticamente. Se guardan en Firestore como base64 sin fecha de expiración. Firestore permite máximo 1 MB por documento, por eso los videos se comprimen a baja resolución.
                         </div>
                         <div class="mt-2">
-                          <input id="promo-files" type="file" accept="image/*" multiple class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700" />
+                          <input id="promo-files" type="file" accept="image/*,video/*" multiple class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700" />
                         </div>
-                        <button id="upload-promo" class="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Subir imágenes</button>
+                        <button id="upload-promo" class="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Subir archivos</button>
                       </div>
 
                       <div id="promo-list" class="space-y-3">
@@ -422,29 +526,35 @@
 
       async function uploadPromoFiles() {
         if (!pendingPromoFiles.length) {
-          showMessage("Selecciona al menos una imagen.", "error");
+          showMessage("Selecciona al menos un archivo.", "error");
           return;
         }
 
-        const oversized = pendingPromoFiles.filter((file) => file.size > 500 * 1024);
+        const oversized = pendingPromoFiles.filter((file) => {
+          if (file.type?.startsWith("video")) {
+            return file.size > 50 * 1024 * 1024;
+          }
+          return file.size > 10 * 1024 * 1024;
+        });
         if (oversized.length > 0) {
-          showMessage("Algunas imágenes superan los 500 KB. Comprímelas antes de subir.", "error");
+          showMessage("Algunos archivos son muy grandes: imágenes máx 10 MB, videos máx 50 MB. El sistema intentará comprimirlos.", "error");
           return;
         }
 
         const button = document.getElementById("upload-promo");
         button.disabled = true;
-        button.textContent = "Convirtiendo...";
+        button.textContent = "Comprimiendo...";
 
         try {
           const uploads = await Promise.all(
             pendingPromoFiles.map(async (file) => {
-              const base64 = await fileToBase64(file);
+              const base64 = await processFile(file);
+              const isVideo = file.type?.startsWith("video");
               return {
                 url: base64,
                 name: file.name,
-                type: file.type || "image",
-                size: file.size
+                type: isVideo ? "video" : "image",
+                size: base64.length
               };
             })
           );
@@ -455,22 +565,171 @@
           pendingPromoFiles = [];
           bindAdminEvents();
           await saveConfig();
-          showMessage("Imágenes guardadas correctamente.", "success");
+          showMessage("Archivos guardados correctamente.", "success");
         } catch (error) {
-          console.error("Error procesando imágenes", error);
-          showMessage("No fue posible procesar las imágenes. Intenta con archivos más pequeños.", "error");
+          console.error("Error procesando archivos", error);
+          showMessage("No fue posible procesar los archivos. Intenta con archivos más pequeños o con formato diferente.", "error");
         } finally {
           button.disabled = false;
-          button.textContent = "Subir imágenes";
+          button.textContent = "Subir archivos";
         }
       }
 
-      function fileToBase64(file) {
+      async function processFile(file) {
+        if (file.type?.startsWith("video")) {
+          return await compressVideo(file, 0.75); // target 0.75 MB para que base64 quepa en Firestore (1 MB)
+        }
+        return await compressImage(file, 1200, 0.7);
+      }
+
+      function compressImage(file, maxSize, quality) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              let w = img.width;
+              let h = img.height;
+              if (w > maxSize || h > maxSize) {
+                if (w > h) {
+                  h = Math.round(h * maxSize / w);
+                  w = maxSize;
+                } else {
+                  w = Math.round(w * maxSize / h);
+                  h = maxSize;
+                }
+              }
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext("2d");
+              ctx.fillStyle = "#FFFFFF";
+              ctx.fillRect(0, 0, w, h);
+              ctx.drawImage(img, 0, 0, w, h);
+              resolve(canvas.toDataURL("image/jpeg", quality));
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+          };
           reader.onerror = reject;
           reader.readAsDataURL(file);
+        });
+      }
+
+      function compressVideo(file, maxSizeMB) {
+        return new Promise((resolve, reject) => {
+          const MAX_BYTES = (maxSizeMB || 0.75) * 1024 * 1024;
+          // Si el video ya es pequeño, enviarlo directo como base64
+          if (file.size <= MAX_BYTES) {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+            return;
+          }
+
+          const video = document.createElement("video");
+          video.muted = true;
+          video.playsInline = true;
+          video.src = URL.createObjectURL(file);
+
+          video.onloadedmetadata = () => {
+            const duration = video.duration;
+            let w = video.videoWidth;
+            let h = video.videoHeight;
+            const maxDim = 360; // resolución baja para caber en 1 MB
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round(h * maxDim / w);
+                w = maxDim;
+              } else {
+                w = Math.round(w * maxDim / h);
+                h = maxDim;
+              }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+
+            const targetBits = MAX_BYTES * 8 * 0.85; // 85% del máximo
+            const videoBitrate = Math.min(500000, Math.floor(targetBits / Math.max(duration, 1)));
+
+            let videoStream;
+            try {
+              videoStream = canvas.captureStream(24);
+            } catch (e) {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+              return;
+            }
+
+            // Agregar pista de audio al stream para que el video comprimido tenga sonido
+            let audioContext = null;
+            let audioDestination = null;
+            let audioSource = null;
+            try {
+              audioContext = new (window.AudioContext || window.webkitAudioContext)();
+              audioDestination = audioContext.createMediaStreamDestination();
+              audioSource = audioContext.createMediaElementSource(video);
+              audioSource.connect(audioDestination);
+              audioSource.connect(audioContext.destination);
+              videoStream.addTrack(audioDestination.stream.getAudioTracks()[0]);
+            } catch (audioErr) {
+              console.warn("No se pudo agregar audio al video comprimido:", audioErr);
+            }
+
+            const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : MediaRecorder.isTypeSupported("video/webm;codecs=vp8") ? "video/webm;codecs=vp8" : "video/webm";
+            const audioBitrate = 64000; // 64 kbps de audio
+            const recorder = new MediaRecorder(videoStream, { mimeType, videoBitsPerSecond: videoBitrate, audioBitsPerSecond: audioBitrate });
+            const chunks = [];
+
+            recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+            recorder.onstop = () => {
+              const blob = new Blob(chunks, { type: mimeType });
+              const reader = new FileReader();
+              reader.onload = () => {
+                URL.revokeObjectURL(video.src);
+                if (audioContext && audioContext.state !== "closed") {
+                  try { audioContext.close(); } catch (e) {}
+                }
+                resolve(reader.result);
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            };
+            recorder.onerror = (e) => reject(e);
+
+            recorder.start(100);
+            video.currentTime = 0;
+            video.play();
+
+            const drawFrame = () => {
+              if (video.ended || video.paused) {
+                if (recorder.state === "recording") recorder.stop();
+                videoStream.getTracks().forEach((t) => t.stop());
+                return;
+              }
+              ctx.drawImage(video, 0, 0, w, h);
+              requestAnimationFrame(drawFrame);
+            };
+
+            video.onplay = () => drawFrame();
+            video.onended = () => {
+              setTimeout(() => {
+                if (recorder.state === "recording") recorder.stop();
+                videoStream.getTracks().forEach((t) => t.stop());
+                if (audioContext && audioContext.state !== "closed") {
+                  try { audioContext.close(); } catch (e) {}
+                }
+              }, 200);
+            };
+            video.onerror = () => reject(new Error("Error al reproducir video"));
+          };
+          video.onerror = () => reject(new Error("Error al cargar video"));
         });
       }
 

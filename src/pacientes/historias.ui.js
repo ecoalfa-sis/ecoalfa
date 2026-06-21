@@ -655,7 +655,7 @@ ${record.prescription || "Sin prescripción"}
         </div>
 
         <div class="footer">
-          <p>ECOALFA Medicina Homeopática · Colombia · Zona horaria Bogotá</p>
+          <p>ECOALFA Medicina · Colombia · Zona horaria Bogotá</p>
         </div>
       </body>
     </html>

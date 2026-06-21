@@ -1,6 +1,6 @@
 # Ecoalfa ERP/CRM
 
-Sistema SPA modular para gestión de consultorio de medicina homeopática.
+Sistema SPA modular para gestión de consultorio médico.
 
 ## FASE 1
 
@@ -52,7 +52,7 @@ Incluye:
 Incluye:
 
 - Módulo `inventario` separado de la UI global.
-- CRUD de medicamentos homeopáticos con nombre, potencia, presentación, stock, precio y stock mínimo.
+- CRUD de medicamentos con nombre, potencia, presentación, stock, precio y stock mínimo.
 - Alertas visuales de stock bajo.
 - Movimientos de entrada, salida y ajuste positivo con auditoría.
 - Listado paginado de máximo 15 medicamentos y 10 movimientos por carga.

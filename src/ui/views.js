@@ -31,7 +31,7 @@ export function renderHistoriasView() {
 }
 
 export function renderInventarioView() {
-  return renderModuleShell("Inventario homeopático", "Medicamentos, potencias, presentaciones, stock y alertas mínimas.");
+  return renderModuleShell("Inventario médico", "Medicamentos, potencias, presentaciones, stock y alertas mínimas.");
 }
 
 export function renderFacturacionView() {

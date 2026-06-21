@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Ecoalfa Medicina Homeopática en Colombia. Agenda tu cita y recibe atención humana, moderna y personalizada." />
-    <title>Ecoalfa | Medicina homeopática en Colombia</title>
+    <meta name="description" content="Ecoalfa Medicina en Colombia. Agenda tu cita y recibe atención humana, moderna y personalizada." />
+    <title>Ecoalfa | Medicina en Colombia</title>
     <style>
       :root {
         --eco-blue: #009EE3;
@@ -650,53 +650,261 @@
         font-size: 0.95rem;
       }
 
-      .info-visual {
-        background: white;
+      .gallery {
+        position: relative;
         border-radius: 24px;
-        padding: 48px;
+        overflow: hidden;
+        background: white;
         box-shadow: 0 20px 60px rgba(0, 95, 140, 0.08);
         border: 1px solid var(--border);
       }
 
-      .info-visual h3 {
-        font-size: 1.3rem;
-        font-weight: 700;
-        margin: 0 0 24px;
+      .gallery-slider {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        overflow: hidden;
+      }
+
+      .gallery-slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f9fc;
+      }
+
+      .gallery-slide.active {
+        opacity: 1;
+      }
+
+      .gallery-slide img,
+      .gallery-slide video,
+      .gallery-slide iframe {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border: none;
+      }
+
+      .gallery-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.95);
         color: var(--text);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.2s ease;
+        font-size: 20px;
       }
 
-      .stats {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
+      .gallery-nav:hover {
+        background: white;
+        transform: translateY(-50%) scale(1.05);
       }
 
-      .stat {
+      .gallery-nav.prev {
+        left: 16px;
+      }
+
+      .gallery-nav.next {
+        right: 16px;
+      }
+
+      .gallery-dots {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px;
+        background: white;
+      }
+
+      .gallery-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: none;
+        background: var(--border);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .gallery-dot.active {
+        background: var(--eco-blue);
+        width: 24px;
+        border-radius: 999px;
+      }
+
+      .gallery-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-light);
+        font-size: 1rem;
         text-align: center;
-        padding: 24px;
-        border-radius: 16px;
+        padding: 40px;
       }
 
-      .stat.blue {
+      /* Plans */
+      .plans {
+        position: relative;
+        padding: 80px 0;
+        overflow: hidden;
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      }
+
+      .plans-blob {
+        width: 400px;
+        height: 400px;
+        top: 20%;
+        right: -180px;
         background: var(--eco-blue-light);
       }
 
-      .stat.green {
-        background: var(--eco-green-light);
+      .plans-grid {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-top: 48px;
       }
 
-      .stat strong {
-        display: block;
+      .plan-card {
+        position: relative;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 40px 32px;
+        box-shadow: 0 10px 40px rgba(0, 95, 140, 0.06);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .plan-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 60px rgba(0, 95, 140, 0.1);
+      }
+
+      .plan-card.gold {
+        border-top: 5px solid #D4AF37;
+      }
+
+      .plan-card.premium {
+        border-top: 5px solid var(--eco-blue);
+      }
+
+      .plan-card.platinum {
+        border-top: 5px solid #6B7280;
+      }
+
+      .plan-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        width: fit-content;
+      }
+
+      .plan-card.gold .plan-badge { background: rgba(212, 175, 55, 0.12); color: #9a7b1a; }
+      .plan-card.premium .plan-badge { background: var(--eco-blue-light); color: var(--eco-blue); }
+      .plan-card.platinum .plan-badge { background: rgba(107, 114, 128, 0.12); color: #4b5563; }
+
+      .plan-name {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text);
+        margin: 0 0 8px;
+      }
+
+      .plan-price {
         font-size: 2rem;
         font-weight: 800;
         color: var(--text);
-        margin-bottom: 4px;
+        margin: 0 0 16px;
       }
 
-      .stat span {
-        font-size: 0.9rem;
+      .plan-description {
+        font-size: 1rem;
         color: var(--text-light);
+        line-height: 1.5;
+        margin: 0 0 24px;
       }
+
+      .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 32px;
+        flex: 1;
+      }
+
+      .plan-features li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.95rem;
+        color: var(--text);
+      }
+
+      .plan-features li:last-child {
+        border-bottom: none;
+      }
+
+      .plan-features li::before {
+        content: "✓";
+        flex-shrink: 0;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+      }
+
+      .plan-card.gold .plan-features li::before { background: #D4AF37; }
+      .plan-card.premium .plan-features li::before { background: var(--eco-blue); }
+      .plan-card.platinum .plan-features li::before { background: #6B7280; }
+
+      .plan-cta {
+        display: block;
+        width: 100%;
+        padding: 14px 24px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
+
+      .plan-card.gold .plan-cta { background: #D4AF37; color: white; }
+      .plan-card.gold .plan-cta:hover { background: #b8942a; }
+      .plan-card.premium .plan-cta { background: var(--eco-blue); color: white; }
+      .plan-card.premium .plan-cta:hover { background: var(--eco-blue-dark); }
+      .plan-card.platinum .plan-cta { background: #6B7280; color: white; }
+      .plan-card.platinum .plan-cta:hover { background: #4b5563; }
 
       /* CTA */
       .cta {
@@ -857,7 +1065,8 @@
           gap: 40px;
         }
 
-        .services-grid {
+        .services-grid,
+        .plans-grid {
           grid-template-columns: repeat(2, 1fr);
         }
 
@@ -871,12 +1080,14 @@
       }
 
       @media (max-width: 640px) {
-        .services-grid {
+        .services-grid,
+        .plans-grid {
           grid-template-columns: 1fr;
         }
 
-        .stats {
-          grid-template-columns: 1fr;
+        .gallery-nav {
+          width: 36px;
+          height: 36px;
         }
 
         .hero {
@@ -911,6 +1122,7 @@
         </a>
         <nav class="nav">
           <a href="#servicios">Servicios</a>
+          <a href="#planes">Planes</a>
           <a href="#nosotros">Nosotros</a>
           <a href="#contacto">Contacto</a>
           <a href="./citas.html" class="btn btn-primary">Ingresar</a>
@@ -929,7 +1141,7 @@
                 <path d="M12 3v18M5 10h14M7 16h10"/>
                 <path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
               </svg>
-              Medicina homeopática en Colombia
+              Medicina en Colombia
             </div>
             <h1 id="hero-title">
               Tu salud en las <span>mejores manos</span>
@@ -956,7 +1168,7 @@
                 </svg>
               </div>
               <h3>Atención personalizada</h3>
-              <p>Médicos especializados en medicina homeopática, listos para escucharte y orientarte.</p>
+              <p>Médicos especializados, listos para escucharte y orientarte.</p>
               <div class="hero-features">
                 <div class="hero-feature">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -974,7 +1186,7 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20 6L9 17l-5-5"/>
                   </svg>
-                  Atención con hora Bogotá
+                  Portal de pacientes
                 </div>
               </div>
             </div>
@@ -997,7 +1209,7 @@
                   <path d="M9 10h6M12 7v6"/>
                 </svg>
               </div>
-              <h3>Consulta homeopática</h3>
+              <h3>Consulta médica</h3>
               <p>Atención integral, escucha activa y acompañamiento para orientar tu proceso de salud.</p>
             </div>
             <div class="service-card">
@@ -1068,7 +1280,7 @@
                   <path d="M20 6L9 17l-5-5"/>
                 </svg>
                 <div>
-                  <strong>Medicina homeopática especializada</strong>
+                  <strong>Medicina especializada</strong>
                   <span>Profesionales con enfoque en tu salud integral.</span>
                 </div>
               </div>
@@ -1092,26 +1304,26 @@
               </div>
             </div>
           </div>
-          <div class="info-visual">
-            <h3>Ecoalfa en cifras</h3>
-            <div class="stats">
-              <div class="stat blue">
-                <strong>CO</strong>
-                <span>Atención pensada para Colombia</span>
-              </div>
-              <div class="stat green">
-                <strong>24/7</strong>
-                <span>Solicitud de citas desde el portal</span>
-              </div>
-              <div class="stat green">
-                <strong>1 clic</strong>
-                <span>Contacto directo por WhatsApp</span>
-              </div>
-              <div class="stat blue">
-                <strong>100%</strong>
-                <span>Compromiso con tu bienestar</span>
-              </div>
+          <div class="gallery" id="gallery">
+            <div class="gallery-slider" id="gallery-slider">
+              <div class="gallery-empty">No hay imágenes o videos configurados aún.</div>
             </div>
+            <button class="gallery-nav prev" id="gallery-prev" aria-label="Anterior">‹</button>
+            <button class="gallery-nav next" id="gallery-next" aria-label="Siguiente">›</button>
+            <div class="gallery-dots" id="gallery-dots"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="planes" class="plans">
+        <div class="bg-blob plans-blob" aria-hidden="true"></div>
+        <div class="container">
+          <div class="section-header">
+            <h2 id="plans-title">Nuestros planes</h2>
+            <p id="plans-description">Elige el plan que se ajuste a tus necesidades y comienza a cuidar tu salud.</p>
+          </div>
+          <div class="plans-grid" id="plans-grid">
+            <!-- Planes se renderizan desde JavaScript -->
           </div>
         </div>
       </section>
@@ -1145,18 +1357,19 @@
               <strong>ECOALFA</strong>
             </div>
             <p>
-              Medicina homeopática en Colombia. Atención cercana, clara y personalizada para tu bienestar y el de tu familia.
+              Medicina en Colombia. Atención cercana, clara y personalizada para tu bienestar y el de tu familia.
             </p>
           </div>
           <div class="footer-col">
             <h4>Servicios</h4>
-            <a href="#servicios">Consulta homeopática</a>
+            <a href="#servicios">Consulta médica</a>
             <a href="#servicios">Agenda de citas</a>
             <a href="#servicios">Historia clínica</a>
             <a href="#servicios">Prescripción médica</a>
           </div>
           <div class="footer-col">
             <h4>Enlaces</h4>
+            <a href="#planes">Planes</a>
             <a href="#nosotros">Nosotros</a>
             <a href="#contacto">Contacto</a>
             <a href="./citas.html">Portal de pacientes</a>
@@ -1169,7 +1382,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          © 2026 <span id="footer-company">Ecoalfa</span> Medicina Homeopática. Todos los derechos reservados.
+          © 2026 <span id="footer-company">Ecoalfa</span> Medicina. Todos los derechos reservados.
         </div>
       </div>
     </footer>
@@ -1226,7 +1439,35 @@
         showPromoModal: true,
         promoAutoPlay: true,
         promoInterval: 5000,
-        promoItems: []
+        promoItems: [],
+        plansSectionTitle: "Nuestros planes",
+        plansSectionDescription: "Elige el plan que se ajuste a tus necesidades y comienza a cuidar tu salud.",
+        plansButtonText: "Afiliarme",
+        plansWhatsAppNumber: "573228971484",
+        plansWhatsAppMessage: "Hola, quiero conocer más sobre el plan",
+        plans: [
+          {
+            id: "gold",
+            name: "Plan Gold",
+            price: "$99.000/mes",
+            description: "Ideal para consultas básicas y acompañamiento mensual.",
+            features: ["1 consulta médica al mes", "Chat de soporte", "Recordatorios de medicación"]
+          },
+          {
+            id: "premium",
+            name: "Plan Premium",
+            price: "$199.000/mes",
+            description: "Atención más completa para ti y tu familia.",
+            features: ["3 consultas médicas al mes", "Chat de soporte prioritario", "Recordatorios de medicación", "Historial clínico digital"]
+          },
+          {
+            id: "platinum",
+            name: "Plan Platinum",
+            price: "$349.000/mes",
+            description: "Cobertura integral con beneficios exclusivos.",
+            features: ["Consultas médicas ilimitadas", "Soporte 24/7", "Recordatorios de medicación", "Historial clínico digital", "Descuentos en medicamentos"]
+          }
+        ]
       };
 
       async function loadConfig() {
@@ -1236,10 +1477,14 @@
           const config = snapshot.exists() ? { ...DEFAULT_CONFIG, ...snapshot.data() } : DEFAULT_CONFIG;
           applyConfig(config);
           setupPromoModal(config);
+          setupGallery(config);
+          setupPlans(config);
         } catch (error) {
           console.error("No se pudo cargar la configuración del sitio", error);
           applyConfig(DEFAULT_CONFIG);
           setupPromoModal(DEFAULT_CONFIG);
+          setupGallery(DEFAULT_CONFIG);
+          setupPlans(DEFAULT_CONFIG);
         }
       }
 
@@ -1289,6 +1534,9 @@
 
         const whatsappFloat = document.getElementById("whatsapp-float");
         if (whatsappFloat) whatsappFloat.href = whatsappFloatLink;
+
+        setText("plans-title", config.plansSectionTitle);
+        setText("plans-description", config.plansSectionDescription);
       }
 
       function setText(id, text) {
@@ -1379,6 +1627,104 @@
         if (config.promoAutoPlay && items.length > 1) {
           interval = setInterval(nextSlide, config.promoInterval || 5000);
         }
+      }
+
+      function setupGallery(config) {
+        const items = config.promoItems || [];
+        const slider = document.getElementById("gallery-slider");
+        const dots = document.getElementById("gallery-dots");
+        const prevBtn = document.getElementById("gallery-prev");
+        const nextBtn = document.getElementById("gallery-next");
+
+        if (!slider || !dots || !prevBtn || !nextBtn) return;
+
+        if (items.length === 0) {
+          slider.innerHTML = `<div class="gallery-empty">No hay imágenes o videos configurados aún.</div>`;
+          dots.innerHTML = "";
+          prevBtn.style.display = "none";
+          nextBtn.style.display = "none";
+          return;
+        }
+
+        prevBtn.style.display = "flex";
+        nextBtn.style.display = "flex";
+
+        slider.innerHTML = items.map((item, index) => {
+          let media = "";
+          if (item.type === "video/youtube") {
+            media = `<iframe src="${item.url}?autoplay=0&rel=0" allow="encrypted-media" allowfullscreen></iframe>`;
+          } else if (item.type?.startsWith("video")) {
+            media = `<video src="${item.url}" controls playsinline></video>`;
+          } else {
+            media = `<img src="${item.url}" alt="${item.name || ""}" />`;
+          }
+          return `
+            <div class="gallery-slide ${index === 0 ? "active" : ""}" data-gallery-slide="${index}">
+              ${media}
+            </div>
+          `;
+        }).join("");
+
+        dots.innerHTML = items.map((_, index) => `
+          <button class="gallery-dot ${index === 0 ? "active" : ""}" data-gallery-dot="${index}" aria-label="Ver slide ${index + 1}"></button>
+        `).join("");
+
+        let currentSlide = 0;
+
+        function showSlide(index) {
+          currentSlide = index;
+          slider.querySelectorAll(".gallery-slide").forEach((slide, i) => {
+            slide.classList.toggle("active", i === index);
+          });
+          dots.querySelectorAll(".gallery-dot").forEach((dot, i) => {
+            dot.classList.toggle("active", i === index);
+          });
+        }
+
+        prevBtn.addEventListener("click", () => {
+          showSlide((currentSlide - 1 + items.length) % items.length);
+        });
+
+        nextBtn.addEventListener("click", () => {
+          showSlide((currentSlide + 1) % items.length);
+        });
+
+        dots.querySelectorAll(".gallery-dot").forEach((dot) => {
+          dot.addEventListener("click", () => showSlide(Number(dot.dataset.galleryDot)));
+        });
+      }
+
+      function setupPlans(config) {
+        const plans = config.plans || [];
+        const grid = document.getElementById("plans-grid");
+        if (!grid) return;
+
+        const classMap = { gold: "gold", premium: "premium", platinum: "platinum" };
+        const badgeMap = { gold: "Plan Gold", premium: "Plan Premium", platinum: "Plan Platinum" };
+        const buttonText = config.plansButtonText || "Afiliarme";
+        const whatsappNumber = config.plansWhatsAppNumber || config.whatsappNumber || "";
+
+        grid.innerHTML = plans.map((plan, index) => {
+          const id = plan.id || ["gold", "premium", "platinum"][index] || `plan-${index}`;
+          const cardClass = classMap[id] || ["gold", "premium", "platinum"][index] || "premium";
+          const badge = badgeMap[id] || plan.name;
+          const features = (plan.features || []).map((feature) => `<li>${escapeHtml(feature)}</li>`).join("");
+          const message = encodeURIComponent(`${config.plansWhatsAppMessage || "Hola, quiero conocer más sobre el plan"} ${plan.name}`);
+          const link = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${message}` : "#";
+
+          return `
+            <div class="plan-card ${cardClass}">
+              <span class="plan-badge">${escapeHtml(badge)}</span>
+              <h3 class="plan-name">${escapeHtml(plan.name)}</h3>
+              <div class="plan-price">${escapeHtml(plan.price)}</div>
+              <p class="plan-description">${escapeHtml(plan.description)}</p>
+              <ul class="plan-features">
+                ${features}
+              </ul>
+              <a href="${link}" class="plan-cta" target="_blank" rel="noopener">${escapeHtml(buttonText)}</a>
+            </div>
+          `;
+        }).join("");
       }
 
       loadConfig();

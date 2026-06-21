@@ -36,7 +36,7 @@ function renderShell() {
     <section class="space-y-8">
       <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
-          <h2 class="text-3xl font-bold text-slate-900">Inventario homeopático</h2>
+          <h2 class="text-3xl font-bold text-slate-900">Inventario médico</h2>
           <p class="mt-1 text-base text-slate-500">Medicamentos, potencias, presentaciones, stock y auditoría de movimientos.</p>
         </div>
         <button id="refresh-inventory" class="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Actualizar</button>

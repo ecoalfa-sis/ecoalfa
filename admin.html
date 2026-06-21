@@ -12,7 +12,7 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
       import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-      import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+      import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyBs85ZtM0tUI5XYypWTze-8xfPJj3EaV5g",
@@ -32,6 +32,8 @@
       let currentUser = null;
       let currentUserProfile = null;
       let currentConfig = null;
+      let promoMediaItems = [];
+      let galleryMediaItems = [];
       let pendingPromoFiles = [];
       let pendingGalleryFiles = [];
 
@@ -66,21 +68,21 @@
             name: "Plan Gold",
             price: "$99.000/mes",
             description: "Ideal para consultas básicas y acompañamiento mensual.",
-            features: ["1 consulta médica al mes", "Chat de soporte", "Recordatorios de medicación"]
+            featuresText: "1 consulta médica al mes\nChat de soporte\nRecordatorios de medicación"
           },
           {
             id: "premium",
             name: "Plan Premium",
             price: "$199.000/mes",
             description: "Atención más completa para ti y tu familia.",
-            features: ["3 consultas médicas al mes", "Chat de soporte prioritario", "Recordatorios de medicación", "Historial clínico digital"]
+            featuresText: "3 consultas médicas al mes\nChat de soporte prioritario\nRecordatorios de medicación\nHistorial clínico digital"
           },
           {
             id: "platinum",
             name: "Plan Platinum",
             price: "$349.000/mes",
             description: "Cobertura integral con beneficios exclusivos.",
-            features: ["Consultas médicas ilimitadas", "Soporte 24/7", "Recordatorios de medicación", "Historial clínico digital", "Descuentos en medicamentos"]
+            featuresText: "Consultas médicas ilimitadas\nSoporte 24/7\nRecordatorios de medicación\nHistorial clínico digital\nDescuentos en medicamentos"
           }
         ]
       };
@@ -159,6 +161,27 @@
         const configRef = doc(db, "config", "siteConfig");
         const snapshot = await getDoc(configRef);
         currentConfig = snapshot.exists() ? { ...DEFAULT_CONFIG, ...snapshot.data() } : { ...DEFAULT_CONFIG };
+
+        const mediaSnap = await getDocs(collection(db, "siteMedia"));
+        const mediaItems = mediaSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+        promoMediaItems = mediaItems
+          .filter((item) => item.kind === "promo")
+          .sort((a, b) => (a.position || 0) - (b.position || 0));
+        galleryMediaItems = mediaItems
+          .filter((item) => item.kind === "gallery")
+          .sort((a, b) => (a.position || 0) - (b.position || 0));
+
+        if (promoMediaItems.length === 0 && Array.isArray(currentConfig.promoItems) && currentConfig.promoItems.length) {
+          await seedLegacyMedia("promo", currentConfig.promoItems);
+          promoMediaItems = await loadMediaByKind("promo");
+        }
+        if (galleryMediaItems.length === 0 && Array.isArray(currentConfig.galleryItems) && currentConfig.galleryItems.length) {
+          await seedLegacyMedia("gallery", currentConfig.galleryItems);
+          galleryMediaItems = await loadMediaByKind("gallery");
+        }
+
+        currentConfig.promoItems = promoMediaItems;
+        currentConfig.galleryItems = galleryMediaItems;
       }
 
       async function saveConfig() {
@@ -180,14 +203,12 @@
           showPromoModal: document.getElementById("cfg-showPromoModal").checked,
           promoAutoPlay: document.getElementById("cfg-promoAutoPlay").checked,
           promoInterval: Number(document.getElementById("cfg-promoInterval").value) || 5000,
-          promoItems: currentConfig.promoItems || [],
-          galleryItems: currentConfig.galleryItems || [],
           plansSectionTitle: document.getElementById("cfg-plansSectionTitle").value.trim(),
           plansSectionDescription: document.getElementById("cfg-plansSectionDescription").value.trim(),
           plansButtonText: document.getElementById("cfg-plansButtonText").value.trim(),
           plansWhatsAppNumber: document.getElementById("cfg-plansWhatsAppNumber").value.trim(),
           plansWhatsAppMessage: document.getElementById("cfg-plansWhatsAppMessage").value.trim(),
-          plans: readPlansConfig()
+          plans: sanitizePlans(readPlansConfig())
         };
 
         const configRef = doc(db, "config", "siteConfig");
@@ -200,7 +221,7 @@
           }
         }, { merge: true });
 
-        currentConfig = payload;
+        currentConfig = { ...payload, promoItems: promoMediaItems, galleryItems: galleryMediaItems };
         showMessage("Configuración guardada correctamente.", "success");
       }
 
@@ -223,7 +244,7 @@
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-600">Beneficios (uno por línea)</label>
-                <textarea id="cfg-plan-${index}-features" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">${escapeHtml((plan.features || []).join("\n"))}</textarea>
+                <textarea id="cfg-plan-${index}-features" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">${escapeHtml(plan.featuresText || (plan.features || []).join("\n"))}</textarea>
               </div>
             </div>
           </div>
@@ -236,10 +257,47 @@
           const name = document.getElementById(`cfg-plan-${i}-name`)?.value.trim() || "";
           const price = document.getElementById(`cfg-plan-${i}-price`)?.value.trim() || "";
           const description = document.getElementById(`cfg-plan-${i}-description`)?.value.trim() || "";
-          const features = document.getElementById(`cfg-plan-${i}-features`)?.value.split("\n").map((f) => f.trim()).filter(Boolean) || [];
-          plans.push({ id: currentConfig?.plans?.[i]?.id || `plan-${i + 1}`, name, price, description, features });
+          const featuresText = document.getElementById(`cfg-plan-${i}-features`)?.value.trim() || "";
+          plans.push({ id: currentConfig?.plans?.[i]?.id || `plan-${i + 1}`, name, price, description, featuresText });
         }
         return plans;
+      }
+
+      async function loadMediaByKind(kind) {
+        const snap = await getDocs(collection(db, "siteMedia"));
+        return snap.docs
+          .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+          .filter((item) => item.kind === kind)
+          .sort((a, b) => (a.position || 0) - (b.position || 0));
+      }
+
+      async function seedLegacyMedia(kind, items) {
+        const cleanItems = sanitizeMediaItems(items);
+        await Promise.all(cleanItems.map((item, index) => addDoc(collection(db, "siteMedia"), {
+          ...item,
+          kind,
+          position: Date.now() + index
+        })));
+      }
+
+      function sanitizeMediaItems(items) {
+        return (items || []).map((item) => ({
+          url: String(item?.url || ""),
+          name: String(item?.name || ""),
+          type: String(item?.type || "image"),
+          ...(typeof item?.originalUrl === "string" ? { originalUrl: item.originalUrl } : {}),
+          ...(typeof item?.size === "number" ? { size: item.size } : {})
+        })).filter((item) => item.url);
+      }
+
+      function sanitizePlans(plans) {
+        return (plans || []).map((plan, index) => ({
+          id: String(plan?.id || `plan-${index + 1}`),
+          name: String(plan?.name || ""),
+          price: String(plan?.price || ""),
+          description: String(plan?.description || ""),
+          featuresText: String(plan?.featuresText || "")
+        }));
       }
 
       function renderAdmin() {
@@ -459,12 +517,16 @@
         if (!items || items.length === 0) {
           return `<p class="text-sm text-slate-500">No hay elementos agregados.</p>`;
         }
-        return items.map((item, index) => {
+        return items.map((item) => {
           let thumbnail = "";
           if (item.type === "video/youtube") {
-            thumbnail = `<div class="flex h-16 w-16 items-center justify-center rounded-lg bg-red-100 text-red-600 font-bold text-xs">YouTube</div>`;
+            thumbnail = item.poster
+              ? `<img src="${item.poster}" alt="" class="h-16 w-16 rounded-lg object-cover bg-slate-100" />`
+              : `<div class="flex h-16 w-16 items-center justify-center rounded-lg bg-red-100 text-red-600 font-bold text-xs">YouTube</div>`;
           } else if (item.type?.startsWith("video")) {
-            thumbnail = `<video src="${item.url}" class="h-16 w-16 rounded-lg object-cover"></video>`;
+            thumbnail = item.poster
+              ? `<img src="${item.poster}" alt="" class="h-16 w-16 rounded-lg object-cover bg-slate-100" />`
+              : `<div class="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-100 text-slate-500 text-xs font-semibold">Video</div>`;
           } else {
             thumbnail = `<img src="${item.url}" alt="" class="h-16 w-16 rounded-lg object-cover" />`;
           }
@@ -476,7 +538,7 @@
                 <p class="truncate text-sm font-medium text-slate-900">${item.name}</p>
                 <p class="text-xs text-slate-500">${item.type || "imagen"}</p>
               </div>
-              <button ${removeAttr}="${index}" class="rounded-lg px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50">Quitar</button>
+              <button ${removeAttr}="${item.id || ""}" class="rounded-lg px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50">Quitar</button>
             </div>
           `;
         }).join("");
@@ -492,21 +554,25 @@
 
         document.querySelectorAll("[data-remove-promo]").forEach((button) => {
           button.addEventListener("click", async () => {
-            const index = Number(button.dataset.removePromo);
-            currentConfig.promoItems.splice(index, 1);
+            const id = button.dataset.removePromo;
+            if (!id) return;
+            await deleteDoc(doc(db, "siteMedia", id));
+            promoMediaItems = promoMediaItems.filter((item) => item.id !== id);
+            currentConfig.promoItems = promoMediaItems;
             document.getElementById("promo-list").innerHTML = renderPromoItems(currentConfig.promoItems, "promo");
             bindAdminEvents();
-            await saveConfig();
           });
         });
 
         document.querySelectorAll("[data-remove-gallery]").forEach((button) => {
           button.addEventListener("click", async () => {
-            const index = Number(button.dataset.removeGallery);
-            currentConfig.galleryItems.splice(index, 1);
+            const id = button.dataset.removeGallery;
+            if (!id) return;
+            await deleteDoc(doc(db, "siteMedia", id));
+            galleryMediaItems = galleryMediaItems.filter((item) => item.id !== id);
+            currentConfig.galleryItems = galleryMediaItems;
             document.getElementById("gallery-list").innerHTML = renderPromoItems(currentConfig.galleryItems, "gallery");
             bindAdminEvents();
-            await saveConfig();
           });
         });
 
@@ -534,11 +600,17 @@
         }
 
         const item = buildPromoItemFromUrl(url);
-        currentConfig.promoItems = [...(currentConfig.promoItems || []), item];
-        document.getElementById("promo-list").innerHTML = renderPromoItems(currentConfig.promoItems);
+        const docRef = await addDoc(collection(db, "siteMedia"), {
+          ...item,
+          kind: "promo",
+          position: Date.now()
+        });
+        const saved = { id: docRef.id, ...item, kind: "promo", position: Date.now() };
+        promoMediaItems = [...promoMediaItems, saved];
+        currentConfig.promoItems = promoMediaItems;
+        document.getElementById("promo-list").innerHTML = renderPromoItems(currentConfig.promoItems, "promo");
         input.value = "";
         bindAdminEvents();
-        await saveConfig();
         showMessage("URL agregada correctamente.", "success");
       }
 
@@ -550,11 +622,17 @@
           return;
         }
         const item = buildPromoItemFromUrl(url);
-        currentConfig.galleryItems = [...(currentConfig.galleryItems || []), item];
+        const docRef = await addDoc(collection(db, "siteMedia"), {
+          ...item,
+          kind: "gallery",
+          position: Date.now()
+        });
+        const saved = { id: docRef.id, ...item, kind: "gallery", position: Date.now() };
+        galleryMediaItems = [...galleryMediaItems, saved];
+        currentConfig.galleryItems = galleryMediaItems;
         document.getElementById("gallery-list").innerHTML = renderPromoItems(currentConfig.galleryItems, "gallery");
         input.value = "";
         bindAdminEvents();
-        await saveConfig();
         showMessage("URL de galería agregada.", "success");
       }
 
@@ -568,21 +646,25 @@
         button.textContent = "Comprimiendo...";
         try {
           const uploads = await Promise.all(
-            pendingGalleryFiles.map(async (file) => {
-              const base64 = await processFile(file);
-              return { url: base64, name: file.name, type: file.type?.startsWith("video") ? "video" : "image" };
+            pendingGalleryFiles.map((file, index) => prepareMediaUpload(file, index))
+          );
+          const savedDocs = await Promise.all(
+            uploads.map(async (item) => {
+              const docRef = await addDoc(collection(db, "siteMedia"), { ...item, kind: "gallery" });
+              return { id: docRef.id, ...item, kind: "gallery" };
             })
           );
-          currentConfig.galleryItems = [...(currentConfig.galleryItems || []), ...uploads];
+          galleryMediaItems = [...galleryMediaItems, ...savedDocs];
+          currentConfig.galleryItems = galleryMediaItems;
           document.getElementById("gallery-list").innerHTML = renderPromoItems(currentConfig.galleryItems, "gallery");
           document.getElementById("gallery-files").value = "";
           pendingGalleryFiles = [];
           bindAdminEvents();
-          await saveConfig();
           showMessage("Archivos de galería guardados.", "success");
         } catch (error) {
           console.error(error);
-          showMessage("Error subiendo a galería.", "error");
+          const msg = error?.message?.includes("muy grande") ? error.message : "Error subiendo a galería.";
+          showMessage(msg, "error");
         } finally {
           button.disabled = false;
           button.textContent = "Subir archivos";
@@ -606,6 +688,7 @@
             url: `https://www.youtube.com/embed/${match[1]}`,
             name: `YouTube video (${match[1]})`,
             type: "video/youtube",
+            poster: `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`,
             originalUrl: url
           };
         }
@@ -639,28 +722,29 @@
 
         try {
           const uploads = await Promise.all(
-            pendingPromoFiles.map(async (file) => {
-              const base64 = await processFile(file);
-              const isVideo = file.type?.startsWith("video");
-              return {
-                url: base64,
-                name: file.name,
-                type: isVideo ? "video" : "image",
-                size: base64.length
-              };
+            pendingPromoFiles.map((file, index) => prepareMediaUpload(file, index))
+          );
+
+          const savedDocs = await Promise.all(
+            uploads.map(async (item) => {
+              const docRef = await addDoc(collection(db, "siteMedia"), { ...item, kind: "promo" });
+              return { id: docRef.id, ...item, kind: "promo" };
             })
           );
 
-          currentConfig.promoItems = [...(currentConfig.promoItems || []), ...uploads];
-          document.getElementById("promo-list").innerHTML = renderPromoItems(currentConfig.promoItems);
+          promoMediaItems = [...promoMediaItems, ...savedDocs];
+          currentConfig.promoItems = promoMediaItems;
+          document.getElementById("promo-list").innerHTML = renderPromoItems(currentConfig.promoItems, "promo");
           document.getElementById("promo-files").value = "";
           pendingPromoFiles = [];
           bindAdminEvents();
-          await saveConfig();
           showMessage("Archivos guardados correctamente.", "success");
         } catch (error) {
           console.error("Error procesando archivos", error);
-          showMessage("No fue posible procesar los archivos. Intenta con archivos más pequeños o con formato diferente.", "error");
+          const msg = error?.message?.includes("muy grande")
+            ? error.message
+            : "No fue posible procesar los archivos. Intenta con archivos más pequeños o con formato diferente.";
+          showMessage(msg, "error");
         } finally {
           button.disabled = false;
           button.textContent = "Subir archivos";
@@ -669,9 +753,279 @@
 
       async function processFile(file) {
         if (file.type?.startsWith("video")) {
-          return await compressVideo(file, 0.75); // target 0.75 MB para que base64 quepa en Firestore (1 MB)
+          return await compressVideoForFirestore(file);
         }
         return await compressImage(file, 1200, 0.7);
+      }
+
+      async function prepareMediaUpload(file, index) {
+        const isVideo = file.type?.startsWith("video");
+        const base64 = await processFile(file);
+        if (typeof base64 !== "string" || !base64.startsWith("data:")) {
+          throw new Error("El archivo no se convirtió correctamente.");
+        }
+        const item = {
+          url: base64,
+          name: file.name,
+          type: isVideo ? "video" : "image",
+          size: base64.length,
+          position: Date.now() + index
+        };
+        if (isVideo) {
+          item.poster = await createVideoPoster(file).catch(() => "");
+        }
+        return item;
+      }
+
+      function createVideoPoster(file) {
+        return new Promise((resolve) => {
+          const objectUrl = URL.createObjectURL(file);
+          const video = document.createElement("video");
+          video.crossOrigin = "anonymous";
+          video.muted = true;
+          video.volume = 0;
+          video.playsInline = true;
+          video.preload = "auto";
+          video.src = objectUrl;
+
+          const cleanup = () => {
+            try { URL.revokeObjectURL(objectUrl); } catch (e) {}
+          };
+
+          const captureFrame = (times) => {
+            const time = times.shift();
+            if (time === undefined) {
+              cleanup();
+              resolve("");
+              return;
+            }
+            const onSeeked = () => {
+              try {
+                const w = video.videoWidth || 480;
+                const h = video.videoHeight || 270;
+                const scale = Math.min(1, 480 / Math.max(w, h));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(w * scale));
+                canvas.height = Math.max(1, Math.round(h * scale));
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                let sum = 0;
+                for (let i = 0; i < data.length; i += 16) {
+                  sum += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                }
+                if (sum / Math.max(1, data.length / 16) < 18) {
+                  captureFrame(times);
+                  return;
+                }
+                cleanup();
+                resolve(canvas.toDataURL("image/jpeg", 0.8));
+              } catch (error) {
+                cleanup();
+                resolve("");
+              }
+            };
+            video.addEventListener("seeked", onSeeked, { once: true });
+            try {
+              video.currentTime = time;
+            } catch (error) {
+              video.removeEventListener("seeked", onSeeked);
+              captureFrame(times);
+            }
+          };
+
+          video.addEventListener("loadeddata", () => {
+            const duration = Math.max(video.duration || 1, 1);
+            captureFrame([
+              Math.min(0.5, duration - 0.1),
+              Math.min(1, duration - 0.1),
+              Math.min(2, duration - 0.1),
+              Math.min(3, duration - 0.1)
+            ]);
+          }, { once: true });
+          video.addEventListener("error", () => {
+            cleanup();
+            resolve("");
+          }, { once: true });
+        });
+      }
+
+      async function compressVideoForFirestore(file) {
+        const MAX_ORIGINAL_BYTES = 500 * 1024;
+        if (file.size <= MAX_ORIGINAL_BYTES) {
+          return await fileToBase64(file);
+        }
+
+        const presets = [
+          { maxSizeMB: 0.55, maxDim: 360, fps: 24, maxChars: 950000, minBitrate: 150000, audioBitrate: 64000 },
+          { maxSizeMB: 0.40, maxDim: 320, fps: 22, maxChars: 900000, minBitrate: 120000, audioBitrate: 48000 },
+          { maxSizeMB: 0.28, maxDim: 260, fps: 18, maxChars: 850000, minBitrate: 80000, audioBitrate: 32000 },
+          { maxSizeMB: 0.20, maxDim: 200, fps: 15, maxChars: 800000, minBitrate: 50000, audioBitrate: 24000 }
+        ];
+
+        let lastError = new Error("No fue posible comprimir el video.");
+        for (const preset of presets) {
+          try {
+            const result = await compressVideoOnce(file, preset);
+            if (typeof result === "string" && result.length <= preset.maxChars) {
+              return result;
+            }
+            lastError = new Error("El video comprimido sigue siendo muy grande. Sube uno más corto o usa un enlace externo de YouTube.");
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        throw lastError;
+      }
+
+      function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function compressVideoOnce(file, preset) {
+        return new Promise((resolve, reject) => {
+          const MAX_BYTES = (preset.maxSizeMB || 0.45) * 1024 * 1024;
+          const objectUrl = URL.createObjectURL(file);
+          const video = document.createElement("video");
+          video.muted = true;
+          video.volume = 0;
+          video.playsInline = true;
+          video.preload = "auto";
+          video.src = objectUrl;
+
+          const cleanup = () => {
+            try { URL.revokeObjectURL(objectUrl); } catch (e) {}
+          };
+
+          const fail = (error) => {
+            cleanup();
+            reject(error instanceof Error ? error : new Error(String(error || "Error al comprimir el video.")));
+          };
+
+          video.onloadeddata = async () => {
+            try {
+              const duration = Math.max(video.duration || 1, 0.5);
+              let w = video.videoWidth || 640;
+              let h = video.videoHeight || 360;
+              const maxDim = preset.maxDim || 360;
+              if (w > maxDim || h > maxDim) {
+                if (w > h) {
+                  h = Math.max(1, Math.round((h * maxDim) / w));
+                  w = maxDim;
+                } else {
+                  w = Math.max(1, Math.round((w * maxDim) / h));
+                  h = maxDim;
+                }
+              }
+
+              const canvas = document.createElement("canvas");
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext("2d");
+              ctx.fillStyle = "#000";
+              ctx.fillRect(0, 0, w, h);
+
+              const canvasStream = canvas.captureStream(preset.fps || 24);
+              const outputStream = new MediaStream();
+              canvasStream.getVideoTracks().forEach((track) => outputStream.addTrack(track));
+
+              try {
+                const sourceStream = video.captureStream ? video.captureStream() : video.mozCaptureStream ? video.mozCaptureStream() : null;
+                if (sourceStream) {
+                  sourceStream.getAudioTracks().forEach((track) => outputStream.addTrack(track));
+                }
+              } catch (audioErr) {
+                console.warn("Audio capture failed:", audioErr);
+              }
+
+              const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+                ? "video/webm;codecs=vp8,opus"
+                : MediaRecorder.isTypeSupported("video/webm;codecs=vp8")
+                  ? "video/webm;codecs=vp8"
+                  : "video/webm";
+              const videoBitrate = Math.max(preset.minBitrate || 100000, Math.min(800000, Math.floor((MAX_BYTES * 8 * 0.72) / duration)));
+              const recorder = new MediaRecorder(outputStream, {
+                mimeType,
+                videoBitsPerSecond: videoBitrate,
+                audioBitsPerSecond: preset.audioBitrate || 32000
+              });
+
+              const chunks = [];
+              let recordingStarted = false;
+
+              recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+              recorder.onerror = fail;
+              recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: mimeType });
+                const reader = new FileReader();
+                reader.onload = () => {
+                  cleanup();
+                  const result = reader.result;
+                  if (typeof result === "string" && result.length > (preset.maxChars || 900000)) {
+                    reject(new Error("El video comprimido sigue siendo muy grande. Sube uno más corto o usa un enlace externo de YouTube."));
+                    return;
+                  }
+                  resolve(result);
+                };
+                reader.onerror = (err) => fail(err);
+                reader.readAsDataURL(blob);
+              };
+
+              const stopRecording = () => {
+                try {
+                  if (recorder.state === "recording") recorder.stop();
+                } catch (err) {
+                  fail(err);
+                }
+                outputStream.getTracks().forEach((track) => track.stop());
+              };
+
+              const drawFrame = () => {
+                if (video.ended || video.currentTime >= duration) {
+                  stopRecording();
+                  return;
+                }
+                try {
+                  ctx.drawImage(video, 0, 0, w, h);
+                } catch (drawErr) {
+                  console.warn("Frame draw failed:", drawErr);
+                }
+                if (!recordingStarted) {
+                  recordingStarted = true;
+                  recorder.start(100);
+                }
+                if (video.requestVideoFrameCallback) {
+                  video.requestVideoFrameCallback(drawFrame);
+                } else {
+                  requestAnimationFrame(drawFrame);
+                }
+              };
+
+              video.onended = stopRecording;
+              try {
+                await video.play();
+              } catch (playErr) {
+                fail(playErr);
+                return;
+              }
+
+              if (video.requestVideoFrameCallback) {
+                video.requestVideoFrameCallback(drawFrame);
+              } else {
+                requestAnimationFrame(drawFrame);
+              }
+            } catch (error) {
+              fail(error);
+            }
+          };
+
+          video.onerror = () => fail(new Error("Error al cargar el video"));
+        });
       }
 
       function compressImage(file, maxSize, quality) {
@@ -711,7 +1065,6 @@
       function compressVideo(file, maxSizeMB) {
         return new Promise((resolve, reject) => {
           const MAX_BYTES = (maxSizeMB || 0.75) * 1024 * 1024;
-          // Si el video ya es pequeño, enviarlo directo como base64
           if (file.size <= MAX_BYTES) {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result);
@@ -720,22 +1073,29 @@
             return;
           }
 
+          const objectUrl = URL.createObjectURL(file);
           const video = document.createElement("video");
           video.muted = true;
+          video.volume = 0;
           video.playsInline = true;
-          video.src = URL.createObjectURL(file);
+          video.preload = "auto";
+          video.src = objectUrl;
 
-          video.onloadedmetadata = () => {
-            const duration = video.duration;
-            let w = video.videoWidth;
-            let h = video.videoHeight;
-            const maxDim = 360; // resolución baja para caber en 1 MB
+          const cleanup = () => {
+            try { URL.revokeObjectURL(objectUrl); } catch (e) {}
+          };
+
+          video.onloadeddata = async () => {
+            const duration = video.duration || 1;
+            let w = video.videoWidth || 640;
+            let h = video.videoHeight || 360;
+            const maxDim = 360;
             if (w > maxDim || h > maxDim) {
               if (w > h) {
-                h = Math.round(h * maxDim / w);
+                h = Math.max(1, Math.round(h * maxDim / w));
                 w = maxDim;
               } else {
-                w = Math.round(w * maxDim / h);
+                w = Math.max(1, Math.round(w * maxDim / h));
                 h = maxDim;
               }
             }
@@ -744,84 +1104,117 @@
             canvas.width = w;
             canvas.height = h;
             const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, w, h);
 
-            const targetBits = MAX_BYTES * 8 * 0.85; // 85% del máximo
-            const videoBitrate = Math.min(500000, Math.floor(targetBits / Math.max(duration, 1)));
+            const canvasStream = canvas.captureStream(24);
+            const outputStream = new MediaStream();
+            canvasStream.getVideoTracks().forEach((track) => outputStream.addTrack(track));
 
-            let videoStream;
             try {
-              videoStream = canvas.captureStream(24);
-            } catch (e) {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-              return;
-            }
-
-            // Agregar pista de audio al stream para que el video comprimido tenga sonido
-            let audioContext = null;
-            let audioDestination = null;
-            let audioSource = null;
-            try {
-              audioContext = new (window.AudioContext || window.webkitAudioContext)();
-              audioDestination = audioContext.createMediaStreamDestination();
-              audioSource = audioContext.createMediaElementSource(video);
-              audioSource.connect(audioDestination);
-              audioSource.connect(audioContext.destination);
-              videoStream.addTrack(audioDestination.stream.getAudioTracks()[0]);
+              const sourceStream = video.captureStream ? video.captureStream() : video.mozCaptureStream ? video.mozCaptureStream() : null;
+              if (sourceStream) {
+                sourceStream.getAudioTracks().forEach((track) => outputStream.addTrack(track));
+              }
             } catch (audioErr) {
-              console.warn("No se pudo agregar audio al video comprimido:", audioErr);
+              console.warn("Audio capture failed:", audioErr);
             }
 
-            const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : MediaRecorder.isTypeSupported("video/webm;codecs=vp8") ? "video/webm;codecs=vp8" : "video/webm";
-            const audioBitrate = 64000; // 64 kbps de audio
-            const recorder = new MediaRecorder(videoStream, { mimeType, videoBitsPerSecond: videoBitrate, audioBitsPerSecond: audioBitrate });
+            const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+              ? "video/webm;codecs=vp8,opus"
+              : MediaRecorder.isTypeSupported("video/webm;codecs=vp8")
+                ? "video/webm;codecs=vp8"
+                : "video/webm";
+            const videoBitrate = Math.min(500000, Math.floor((MAX_BYTES * 8 * 0.82) / duration));
+            const recorder = new MediaRecorder(outputStream, {
+              mimeType,
+              videoBitsPerSecond: videoBitrate,
+              audioBitsPerSecond: 64000
+            });
+
             const chunks = [];
+            let recordingStarted = false;
 
             recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
             recorder.onstop = () => {
               const blob = new Blob(chunks, { type: mimeType });
               const reader = new FileReader();
               reader.onload = () => {
-                URL.revokeObjectURL(video.src);
-                if (audioContext && audioContext.state !== "closed") {
-                  try { audioContext.close(); } catch (e) {}
+                cleanup();
+                const result = reader.result;
+                if (typeof result === "string" && result.length > 950000) {
+                  reject(new Error("El video comprimido sigue siendo muy grande. Sube uno más corto o usa un enlace externo de YouTube."));
+                  return;
                 }
-                resolve(reader.result);
+                resolve(result);
               };
-              reader.onerror = reject;
+              reader.onerror = (err) => {
+                cleanup();
+                reject(err);
+              };
               reader.readAsDataURL(blob);
             };
-            recorder.onerror = (e) => reject(e);
+            recorder.onerror = (e) => {
+              cleanup();
+              reject(e);
+            };
 
-            recorder.start(100);
-            video.currentTime = 0;
-            video.play();
+            const stopRecording = () => {
+              try {
+                if (recorder.state === "recording") recorder.stop();
+              } catch (e) {
+                cleanup();
+                reject(e);
+              }
+              outputStream.getTracks().forEach((track) => track.stop());
+            };
 
             const drawFrame = () => {
-              if (video.ended || video.paused) {
-                if (recorder.state === "recording") recorder.stop();
-                videoStream.getTracks().forEach((t) => t.stop());
+              if (video.ended || video.currentTime >= duration) {
+                stopRecording();
                 return;
               }
-              ctx.drawImage(video, 0, 0, w, h);
-              requestAnimationFrame(drawFrame);
+              try {
+                ctx.drawImage(video, 0, 0, w, h);
+              } catch (drawErr) {
+                console.warn("Frame draw failed:", drawErr);
+              }
+              if (!recordingStarted) {
+                recordingStarted = true;
+                recorder.start(100);
+              }
+              if (video.requestVideoFrameCallback) {
+                video.requestVideoFrameCallback(drawFrame);
+              } else {
+                requestAnimationFrame(drawFrame);
+              }
             };
 
-            video.onplay = () => drawFrame();
-            video.onended = () => {
-              setTimeout(() => {
-                if (recorder.state === "recording") recorder.stop();
-                videoStream.getTracks().forEach((t) => t.stop());
-                if (audioContext && audioContext.state !== "closed") {
-                  try { audioContext.close(); } catch (e) {}
-                }
-              }, 200);
+            try {
+              await video.play();
+            } catch (playErr) {
+              cleanup();
+              reject(playErr);
+              return;
+            }
+
+            if (video.requestVideoFrameCallback) {
+              video.requestVideoFrameCallback(drawFrame);
+            } else {
+              requestAnimationFrame(drawFrame);
+            }
+
+            video.onended = stopRecording;
+            video.onerror = () => {
+              cleanup();
+              reject(new Error("Error al reproducir video"));
             };
-            video.onerror = () => reject(new Error("Error al reproducir video"));
           };
-          video.onerror = () => reject(new Error("Error al cargar video"));
+
+          video.onerror = () => {
+            cleanup();
+            reject(new Error("Error al cargar video"));
+          };
         });
       }
 

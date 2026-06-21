@@ -111,6 +111,11 @@ service cloud.firestore {
       allow write: if isAdmin() || isMedico();
     }
 
+    match /siteMedia/{mediaId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() || isMedico();
+    }
+
     match /indicators/{indicatorId} {
       allow read: if canReadIndicators();
       allow write: if isAdmin();

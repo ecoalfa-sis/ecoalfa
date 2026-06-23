@@ -12,7 +12,7 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
       import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-      import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+      import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, addDoc, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
       import { getDatabase, ref as dbRef, push, set, get, remove, child } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
       const firebaseConfig = {
@@ -170,19 +170,6 @@
         galleryMediaItems = await loadMediaByKind("gallery");
         heroMediaItems = await loadMediaByKind("hero");
 
-        if (promoMediaItems.length === 0 && Array.isArray(currentConfig.promoItems) && currentConfig.promoItems.length) {
-          await seedLegacyMedia("promo", currentConfig.promoItems);
-          promoMediaItems = await loadMediaByKind("promo");
-        }
-        if (galleryMediaItems.length === 0 && Array.isArray(currentConfig.galleryItems) && currentConfig.galleryItems.length) {
-          await seedLegacyMedia("gallery", currentConfig.galleryItems);
-          galleryMediaItems = await loadMediaByKind("gallery");
-        }
-        if (heroMediaItems.length === 0 && Array.isArray(currentConfig.heroItems) && currentConfig.heroItems.length) {
-          await seedLegacyMedia("hero", currentConfig.heroItems);
-          heroMediaItems = await loadMediaByKind("hero");
-        }
-
         currentConfig.promoItems = promoMediaItems;
         currentConfig.galleryItems = galleryMediaItems;
         currentConfig.heroItems = heroMediaItems;
@@ -222,7 +209,10 @@
           updatedBy: {
             uid: currentUser?.uid || "",
             name: currentUserProfile?.displayName || currentUser?.email || ""
-          }
+          },
+          promoItems: deleteField(),
+          galleryItems: deleteField(),
+          heroItems: deleteField()
         }, { merge: true });
 
         currentConfig = { ...payload, promoItems: promoMediaItems, galleryItems: galleryMediaItems, heroItems: heroMediaItems };
@@ -591,20 +581,53 @@
         document.getElementById("upload-hero").addEventListener("click", uploadHeroFiles);
         document.getElementById("add-hero-url").addEventListener("click", addHeroUrl);
 
+
+
+        async function deleteMediaItem(id, item, rtdbPath) {
+          const errors = [];
+          let deleted = false;
+          console.log("[delete] id:", id, "source:", item?.source, "rtdbPath:", rtdbPath);
+
+          if (item?.source === "rtdb" || item?.source == null) {
+            try {
+              await remove(dbRef(rtdb, rtdbPath));
+              deleted = true;
+              console.log("[delete] RTDB ok:", rtdbPath);
+            } catch (e) {
+              errors.push(`RTDB: ${e.message}`);
+              console.warn("[delete] RTDB error:", e);
+            }
+          }
+
+          if (item?.source !== "rtdb" || !deleted) {
+            try {
+              await deleteDoc(doc(db, "siteMedia", id));
+              deleted = true;
+              console.log("[delete] Firestore ok:", id);
+            } catch (e) {
+              errors.push(`Firestore: ${e.message}`);
+              console.warn("[delete] Firestore error:", e);
+            }
+          }
+
+          return { deleted, errors };
+        }
+
         document.querySelectorAll("[data-remove-promo]").forEach((button) => {
           button.addEventListener("click", async () => {
             const id = button.dataset.removePromo;
             if (!id) return;
             const item = promoMediaItems.find((item) => item.id === id);
-            if (item?.source === "rtdb") {
-              try { await remove(dbRef(rtdb, `siteMedia/promo/${id}`)); } catch (e) { console.warn(e); }
+            const { deleted, errors } = await deleteMediaItem(id, item, `siteMedia/promo/${id}`);
+            if (deleted) {
+              promoMediaItems = promoMediaItems.filter((item) => item.id !== id);
+              currentConfig.promoItems = promoMediaItems;
+              document.getElementById("promo-list").innerHTML = renderPromoItems(currentConfig.promoItems, "promo");
+              bindAdminEvents();
+              showMessage("Elemento eliminado.", "success");
             } else {
-              await deleteDoc(doc(db, "siteMedia", id));
+              showMessage("No se pudo eliminar: " + errors.join("; "), "error");
             }
-            promoMediaItems = promoMediaItems.filter((item) => item.id !== id);
-            currentConfig.promoItems = promoMediaItems;
-            document.getElementById("promo-list").innerHTML = renderPromoItems(currentConfig.promoItems, "promo");
-            bindAdminEvents();
           });
         });
 
@@ -613,15 +636,16 @@
             const id = button.dataset.removeGallery;
             if (!id) return;
             const item = galleryMediaItems.find((item) => item.id === id);
-            if (item?.source === "rtdb") {
-              try { await remove(dbRef(rtdb, `siteMedia/gallery/${id}`)); } catch (e) { console.warn(e); }
+            const { deleted, errors } = await deleteMediaItem(id, item, `siteMedia/gallery/${id}`);
+            if (deleted) {
+              galleryMediaItems = galleryMediaItems.filter((item) => item.id !== id);
+              currentConfig.galleryItems = galleryMediaItems;
+              document.getElementById("gallery-list").innerHTML = renderPromoItems(currentConfig.galleryItems, "gallery");
+              bindAdminEvents();
+              showMessage("Elemento eliminado.", "success");
             } else {
-              await deleteDoc(doc(db, "siteMedia", id));
+              showMessage("No se pudo eliminar: " + errors.join("; "), "error");
             }
-            galleryMediaItems = galleryMediaItems.filter((item) => item.id !== id);
-            currentConfig.galleryItems = galleryMediaItems;
-            document.getElementById("gallery-list").innerHTML = renderPromoItems(currentConfig.galleryItems, "gallery");
-            bindAdminEvents();
           });
         });
 
@@ -630,15 +654,16 @@
             const id = button.dataset.removeHero;
             if (!id) return;
             const item = heroMediaItems.find((item) => item.id === id);
-            if (item?.source === "rtdb") {
-              try { await remove(dbRef(rtdb, `siteMedia/hero/${id}`)); } catch (e) { console.warn(e); }
+            const { deleted, errors } = await deleteMediaItem(id, item, `siteMedia/hero/${id}`);
+            if (deleted) {
+              heroMediaItems = heroMediaItems.filter((item) => item.id !== id);
+              currentConfig.heroItems = heroMediaItems;
+              document.getElementById("hero-list").innerHTML = renderPromoItems(currentConfig.heroItems, "hero");
+              bindAdminEvents();
+              showMessage("Elemento eliminado.", "success");
             } else {
-              await deleteDoc(doc(db, "siteMedia", id));
+              showMessage("No se pudo eliminar: " + errors.join("; "), "error");
             }
-            heroMediaItems = heroMediaItems.filter((item) => item.id !== id);
-            currentConfig.heroItems = heroMediaItems;
-            document.getElementById("hero-list").innerHTML = renderPromoItems(currentConfig.heroItems, "hero");
-            bindAdminEvents();
           });
         });
 

@@ -1721,10 +1721,12 @@
 
         try {
           const media = await loadMediaItems();
-          config.promoItems = media.promoItems.length ? media.promoItems : (Array.isArray(config.promoItems) ? config.promoItems : []);
-          config.galleryItems = media.galleryItems.length ? media.galleryItems : (Array.isArray(config.galleryItems) ? config.galleryItems : []);
+          config.promoItems = media.promoItems || [];
+          config.galleryItems = media.galleryItems || [];
         } catch (error) {
           console.warn("No se pudieron cargar los medios:", error);
+          config.promoItems = [];
+          config.galleryItems = [];
         }
 
         try { applyConfig(config); } catch (error) { console.error("Error en applyConfig:", error); }

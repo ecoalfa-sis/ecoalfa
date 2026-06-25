@@ -398,6 +398,47 @@
         color: var(--eco-blue);
       }
 
+      .menu-toggle {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        width: 44px;
+        height: 44px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 12px;
+        transition: background 0.2s ease;
+      }
+
+      .menu-toggle span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        background: var(--text);
+        border-radius: 2px;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+
+      .menu-toggle:hover {
+        background: var(--bg-soft);
+      }
+
+      .menu-toggle.active span:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+      }
+
+      .menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .menu-toggle.active span:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+      }
+
       .btn {
         display: inline-flex;
         align-items: center;
@@ -1658,8 +1699,46 @@
           grid-template-columns: repeat(2, 1fr);
         }
 
+        .menu-toggle {
+          display: flex;
+        }
+
         .nav {
           display: none;
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 24px;
+          right: 24px;
+          background: white;
+          border: 1px solid var(--border);
+          border-radius: 20px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+          padding: 16px;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 4px;
+          z-index: 100;
+        }
+
+        .nav.active {
+          display: flex;
+        }
+
+        .nav a {
+          padding: 12px 16px;
+          border-radius: 12px;
+          transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .nav a:hover {
+          background: var(--bg-soft);
+          color: var(--eco-blue);
+        }
+
+        .nav .btn {
+          margin-top: 8px;
+          width: 100%;
+          text-align: center;
         }
 
         .cta-inner {
@@ -1708,7 +1787,12 @@
             <span id="brand-slogan">su salud es lo más importante</span>
           </div>
         </a>
-        <nav class="nav">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="main-nav">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <nav class="nav" id="main-nav">
           <a href="#servicios">Servicios</a>
           <a href="#tienda">Tienda</a>
           <a href="#planes">Planes</a>
@@ -2855,6 +2939,43 @@
         }).join("");
       }
 
+      function initMobileMenu() {
+        const toggle = document.getElementById("menu-toggle");
+        const nav = document.getElementById("main-nav");
+        if (!toggle || !nav) return;
+
+        function closeMenu() {
+          nav.classList.remove("active");
+          toggle.classList.remove("active");
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.setAttribute("aria-label", "Abrir menú");
+        }
+
+        toggle.addEventListener("click", () => {
+          const isActive = nav.classList.toggle("active");
+          toggle.classList.toggle("active", isActive);
+          toggle.setAttribute("aria-expanded", isActive ? "true" : "false");
+          toggle.setAttribute("aria-label", isActive ? "Cerrar menú" : "Abrir menú");
+        });
+
+        nav.querySelectorAll("a").forEach((link) => {
+          link.addEventListener("click", closeMenu);
+        });
+
+        document.addEventListener("click", (event) => {
+          if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+            closeMenu();
+          }
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && nav.classList.contains("active")) {
+            closeMenu();
+          }
+        });
+      }
+
+      initMobileMenu();
       loadConfig();
     </script>
   </body>

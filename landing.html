@@ -1150,6 +1150,183 @@
         transform: scale(1.05);
       }
 
+      .product-more {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: -8px 0 12px;
+        padding: 0;
+        background: none;
+        border: none;
+        color: var(--eco-blue);
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+
+      .product-more:hover {
+        color: var(--eco-blue-dark);
+      }
+
+      .product-more::after {
+        content: "→";
+        transition: transform 0.2s ease;
+      }
+
+      .product-more:hover::after {
+        transform: translateX(4px);
+      }
+
+      .product-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      .product-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .product-modal {
+        position: relative;
+        width: 100%;
+        max-width: 900px;
+        max-height: calc(100vh - 48px);
+        background: white;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+        transform: scale(0.95) translateY(20px);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: row;
+      }
+
+      .product-modal-overlay.active .product-modal {
+        transform: scale(1) translateY(0);
+      }
+
+      .product-modal-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 10;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.95);
+        color: var(--text);
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .product-modal-close:hover {
+        background: white;
+        transform: rotate(90deg);
+        color: var(--eco-blue);
+      }
+
+      .product-modal-image {
+        position: relative;
+        width: 50%;
+        min-height: 100%;
+        overflow: hidden;
+        background: #ffffff;
+        flex-shrink: 0;
+        isolation: isolate;
+      }
+
+      .product-modal-image-bg {
+        position: absolute;
+        inset: -20px;
+        background-size: cover;
+        background-position: center;
+        filter: blur(24px);
+        transform: scale(1.1);
+        opacity: 0.65;
+        z-index: 1;
+      }
+
+      .product-modal-image img {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .product-modal-content {
+        flex: 1;
+        min-width: 0;
+        padding: 32px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .product-modal-description {
+        font-size: 1rem;
+        color: var(--text-light);
+        line-height: 1.7;
+        margin: 16px 0 24px;
+        white-space: pre-line;
+      }
+
+      .product-modal-footer {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 768px) {
+        .product-modal {
+          max-width: 520px;
+          max-height: calc(100vh - 32px);
+          border-radius: 20px;
+          flex-direction: column;
+        }
+
+        .product-modal-image {
+          width: 100%;
+          min-height: auto;
+          aspect-ratio: 4 / 3;
+        }
+
+        .product-modal-content {
+          padding: 24px;
+        }
+
+        .product-modal-footer {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .product-modal-footer .product-buy {
+          text-align: center;
+        }
+      }
+
       /* Plans */
       .plans {
         position: relative;
@@ -1741,6 +1918,25 @@
           <div class="store-grid" id="store-grid">
             <div class="gallery-empty">Cargando productos...</div>
           </div>
+
+          <div class="product-modal-overlay" id="product-modal-overlay">
+            <div class="product-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+              <button class="product-modal-close" id="product-modal-close" aria-label="Cerrar">×</button>
+              <div class="product-modal-image">
+                <div class="product-modal-image-bg" id="product-modal-image-bg"></div>
+                <img id="product-modal-img" src="" alt="" />
+              </div>
+              <div class="product-modal-content">
+                <span class="product-category" id="product-modal-category">Tienda Naturista</span>
+                <h3 class="product-name" id="product-modal-title">Producto</h3>
+                <div class="product-modal-description" id="product-modal-description"></div>
+                <div class="product-modal-footer">
+                  <span class="product-price" id="product-modal-price"></span>
+                  <a id="product-modal-buy" href="#" target="_blank" rel="noopener noreferrer" class="product-buy">Comprar</a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1925,10 +2121,12 @@
           const media = await loadMediaItems();
           config.promoItems = media.promoItems || [];
           config.galleryItems = media.galleryItems || [];
+          config.storeItems = media.storeItems || [];
         } catch (error) {
           console.warn("No se pudieron cargar los medios:", error);
           config.promoItems = [];
           config.galleryItems = [];
+          config.storeItems = [];
         }
 
         try { applyConfig(config); } catch (error) { console.error("Error en applyConfig:", error); }
@@ -2128,6 +2326,17 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#039;");
+      }
+
+      function formatPrice(value) {
+        const raw = String(value || "").replace(/[^0-9]/g, "");
+        const num = parseFloat(raw);
+        if (!raw || isNaN(num)) return value || "";
+        return new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+          minimumFractionDigits: 0
+        }).format(num);
       }
 
       async function setupPromoModal(config) {
@@ -2335,37 +2544,127 @@
         const grid = document.getElementById("store-grid");
         if (!grid) return;
 
+        currentStoreItems = items;
+
         if (items.length === 0) {
           grid.innerHTML = `<div class="gallery-empty">Próximamente... estamos preparando nuestra selección de productos naturales para ti.</div>`;
           return;
         }
 
-        grid.innerHTML = items.map((item) => {
-          const whatsappMsg = encodeURIComponent(`Hola Ecoalfa, me interesa el producto: ${item.name}`);
-          const whatsappLink = `https://wa.me/${config.whatsappNumber}?text=${whatsappMsg}`;
-          
+        const number = config.whatsappNumber || DEFAULT_CONFIG.whatsappNumber;
+
+        grid.innerHTML = items.map((item, index) => {
+          const name = escapeHtml(item.name || "Producto");
+          const rawPrice = item.price || "";
+          const price = formatPrice(rawPrice);
+          const description = escapeHtml(item.description || "");
+          const imageUrl = escapeHtml(item.url || "");
+          const message = encodeURIComponent(
+            `Hola Ecoalfa, me interesa comprar el siguiente producto de la Tienda Naturista:\n\n` +
+            `*${name}*\n` +
+            `Precio: ${price}\n` +
+            (description ? `Descripción: ${description}\n\n` : "\n") +
+            `¿Está disponible?`
+          );
+          const whatsappLink = `https://wa.me/${number}?text=${message}`;
+          const hasDescription = (item.description || "").trim().length > 0;
+
           return `
             <article class="product-card">
               <div class="product-image">
-                <img src="${item.url}" alt="${item.name}" loading="lazy" />
+                <img src="${imageUrl}" alt="${name}" loading="lazy" />
               </div>
               <div class="product-info">
                 <span class="product-category">Tienda Naturista</span>
-                <h3 class="product-name">${item.name}</h3>
-                <p class="product-description">${item.description || ""}</p>
+                <h3 class="product-name">${name}</h3>
+                <p class="product-description">${description}</p>
+                ${hasDescription ? `<button type="button" class="product-more" data-store-index="${index}">Más información</button>` : ""}
                 <div class="product-footer">
-                  <span class="product-price">${item.price}</span>
-                  <a href="${whatsappLink}" target="_blank" class="product-buy">Comprar</a>
+                  <span class="product-price">${price}</span>
+                  <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="product-buy">Comprar</a>
                 </div>
               </div>
             </article>
           `;
         }).join("");
+
+        if (!storeModalInitialized) {
+          initStoreModal(number);
+          storeModalInitialized = true;
+        }
+      }
+
+      function initStoreModal(whatsappNumber) {
+        const overlay = document.getElementById("product-modal-overlay");
+        const closeBtn = document.getElementById("product-modal-close");
+        const modalImg = document.getElementById("product-modal-img");
+        const modalBg = document.getElementById("product-modal-image-bg");
+        const modalTitle = document.getElementById("product-modal-title");
+        const modalDescription = document.getElementById("product-modal-description");
+        const modalPrice = document.getElementById("product-modal-price");
+        const modalBuy = document.getElementById("product-modal-buy");
+        const grid = document.getElementById("store-grid");
+        if (!overlay || !closeBtn || !modalImg || !modalTitle || !modalDescription || !modalPrice || !modalBuy || !grid) return;
+
+        function openModal(index) {
+          const item = currentStoreItems[index];
+          if (!item) return;
+
+          const name = escapeHtml(item.name || "Producto");
+          const rawPrice = item.price || "";
+          const price = formatPrice(rawPrice);
+          const description = escapeHtml(item.description || "");
+          const imageUrl = escapeHtml(item.url || "");
+          const rawImageUrl = item.url || "";
+          const message = encodeURIComponent(
+            `Hola Ecoalfa, me interesa comprar el siguiente producto de la Tienda Naturista:\n\n` +
+            `*${name}*\n` +
+            `Precio: ${price}\n` +
+            (description ? `Descripción: ${description}\n\n` : "\n") +
+            `¿Está disponible?`
+          );
+
+          modalImg.src = imageUrl;
+          modalImg.alt = name;
+          modalBg.style.backgroundImage = rawImageUrl ? `url("${rawImageUrl}")` : "none";
+          modalTitle.textContent = name;
+          modalDescription.textContent = description;
+          modalPrice.textContent = price;
+          modalBuy.href = `https://wa.me/${whatsappNumber}?text=${message}`;
+
+          overlay.classList.add("active");
+          document.body.style.overflow = "hidden";
+          closeBtn.focus();
+        }
+
+        function closeModal() {
+          overlay.classList.remove("active");
+          document.body.style.overflow = "";
+        }
+
+        grid.addEventListener("click", (event) => {
+          const button = event.target.closest("[data-store-index]");
+          if (button) {
+            openModal(Number(button.dataset.storeIndex));
+          }
+        });
+
+        closeBtn.addEventListener("click", closeModal);
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) closeModal();
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && overlay.classList.contains("active")) {
+            closeModal();
+          }
+        });
       }
 
       let heroMediaItems = [];
       let heroCurrentSlide = 0;
       let heroAutoAdvanceInterval = null;
+      let currentStoreItems = [];
+      let storeModalInitialized = false;
 
       async function setupHeroCarousel() {
         const slider = document.getElementById("hero-card-slider");

@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ecoalfa Medicina en Colombia. Tienda Naturista y atención médica personalizada." />
+    <title>Ecoalfa | Tienda Naturista</title>
+
+    <link rel="icon" type="image/png" href="./assets/ecoalfa-logo.png" />
+
+    <meta property="og:title" content="Ecoalfa | Tienda Naturista" />
+    <meta property="og:description" content="Descubre nuestros productos naturales y agenda tu cita médica con Ecoalfa." />
+    <meta property="og:image" content="https://eco-alfa.github.io/ecoalfa/assets/ecoalfa-logo.png" />
+    <meta property="og:url" content="https://eco-alfa.github.io/ecoalfa/ecoalfa.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_CO" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ecoalfa | Tienda Naturista" />
+    <meta name="twitter:description" content="Descubre nuestros productos naturales y agenda tu cita médica con Ecoalfa." />
+    <meta name="twitter:image" content="https://eco-alfa.github.io/ecoalfa/assets/ecoalfa-logo.png" />
+
+    <style>
+      :root {
+        --eco-blue: #009EE3;
+        --eco-blue-dark: #0077B6;
+        --eco-blue-light: #E6F6FC;
+        --eco-green: #43B02A;
+        --eco-green-dark: #31801f;
+        --eco-green-light: #E8F5E4;
+        --text: #1a1a1a;
+        --text-light: #5A6A7A;
+        --bg: #FFFFFF;
+        --bg-soft: #F5F9FC;
+        --border: #E2E8F0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        line-height: 1.5;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      img {
+        max-width: 100%;
+        display: block;
+      }
+
+      .container {
+        width: min(520px, 100%);
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        padding: 12px 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%);
+        pointer-events: none;
+      }
+
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        padding: 8px 16px;
+        border-radius: 999px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      .brand img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+      }
+
+      .brand strong {
+        font-size: 1rem;
+        font-weight: 800;
+        color: var(--text);
+      }
+
+      /* Video Section - 9:16 */
+      .video-section {
+        position: relative;
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        overflow: hidden;
+      }
+
+      .video-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 520px;
+        aspect-ratio: 9 / 16;
+        max-height: 100vh;
+        background: #000;
+      }
+
+      .video-wrapper video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .video-fallback {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+        color: white;
+        text-align: center;
+        padding: 24px;
+        background: linear-gradient(135deg, var(--eco-blue) 0%, var(--eco-green) 100%);
+      }
+
+      .video-fallback.active {
+        display: flex;
+      }
+
+      .video-fallback p {
+        margin: 0;
+        font-size: 1rem;
+        opacity: 0.9;
+      }
+
+      .video-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 24px 16px 32px;
+        background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%);
+        color: white;
+        text-align: center;
+      }
+
+      .video-overlay h1 {
+        margin: 0 0 8px;
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .video-overlay p {
+        margin: 0;
+        font-size: 1rem;
+        opacity: 0.9;
+      }
+
+      .scroll-hint {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        opacity: 0.7;
+        animation: bounce 2s infinite;
+        font-size: 1.5rem;
+      }
+
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+        40% { transform: translateX(-50%) translateY(-8px); }
+        60% { transform: translateX(-50%) translateY(-4px); }
+      }
+
+      /* Product Section */
+      .product-section {
+        padding: 40px 0 120px;
+        background: var(--bg);
+      }
+
+      .section-label {
+        display: block;
+        text-align: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--eco-blue);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 16px;
+      }
+
+      .product-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
+      }
+
+      .product-image {
+        position: relative;
+        aspect-ratio: 1 / 1;
+        background: var(--bg-soft);
+        overflow: hidden;
+      }
+
+      .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+      }
+
+      .product-card:hover .product-image img {
+        transform: scale(1.03);
+      }
+
+      .product-badge {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: var(--eco-green);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 999px;
+        text-transform: uppercase;
+      }
+
+      .product-info {
+        padding: 24px;
+      }
+
+      .product-name {
+        font-size: 1.4rem;
+        font-weight: 800;
+        margin: 0 0 8px;
+        line-height: 1.25;
+      }
+
+      .product-description {
+        font-size: 1rem;
+        color: var(--text-light);
+        margin: 0 0 20px;
+        line-height: 1.6;
+      }
+
+      .product-price {
+        display: block;
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--eco-blue);
+        margin-bottom: 16px;
+      }
+
+      .cta-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 16px 24px;
+        border-radius: 16px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+        cursor: pointer;
+      }
+
+      .cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .cta-whatsapp {
+        background: var(--eco-green);
+        color: white;
+        margin-bottom: 12px;
+      }
+
+      .cta-whatsapp:hover {
+        background: var(--eco-green-dark);
+      }
+
+      .cta-secondary {
+        background: var(--bg-soft);
+        color: var(--text);
+      }
+
+      .cta-secondary:hover {
+        background: var(--eco-blue-light);
+        color: var(--eco-blue-dark);
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px 24px;
+        color: var(--text-light);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        background: var(--bg-soft);
+        border-radius: 24px;
+        color: var(--text-light);
+      }
+
+      .empty-state h3 {
+        margin: 0 0 8px;
+        color: var(--text);
+      }
+
+      .sticky-cta {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 40;
+        background: white;
+        border-top: 1px solid var(--border);
+        padding: 12px 16px;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+      }
+
+      .sticky-cta-inner {
+        width: min(520px, 100%);
+        margin: 0 auto;
+      }
+
+      .sticky-cta a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 16px 24px;
+        border-radius: 16px;
+        background: var(--eco-green);
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 700;
+        transition: transform 0.2s ease, background 0.2s ease;
+      }
+
+      .sticky-cta a:hover {
+        background: var(--eco-green-dark);
+        transform: translateY(-2px);
+      }
+
+      .footer-minimal {
+        padding: 24px 16px 120px;
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--text-light);
+      }
+
+      .footer-minimal a {
+        color: var(--eco-blue);
+        text-decoration: underline;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        border: 3px solid rgba(0, 158, 227, 0.2);
+        border-top-color: var(--eco-blue);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      @media (min-width: 640px) {
+        .video-section {
+          padding: 40px 0;
+          min-height: auto;
+          background: var(--bg-soft);
+        }
+
+        .video-wrapper {
+          border-radius: 24px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .video-overlay {
+          border-radius: 0 0 24px 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="container header-inner">
+        <a href="./landing.html" class="brand">
+          <img src="./assets/ecoalfa-logo.png" alt="Ecoalfa" />
+          <strong>ECOALFA</strong>
+        </a>
+      </div>
+    </header>
+
+    <section class="video-section">
+      <div class="video-wrapper">
+        <video
+          id="hero-video"
+          autoplay
+          muted
+          loop
+          playsinline
+          poster="./assets/ecoalfa-logo.png"
+          aria-label="Video promocional de Ecoalfa"
+        >
+          <source src="" type="video/mp4" />
+          Tu navegador no soporta videos.
+        </video>
+        <div id="video-fallback" class="video-fallback active">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z" />
+            <path d="m10 8 6 4-6 4V8Z" />
+          </svg>
+          <p>Video promocional de Ecoalfa</p>
+          <p style="font-size: 0.85rem; opacity: 0.7;">Sube tu video en formato 9:16</p>
+        </div>
+        <div class="video-overlay">
+          <h1>Bienestar natural para tu vida</h1>
+          <p>Productos naturales y atención médica personalizada</p>
+        </div>
+        <div class="scroll-hint">⌄</div>
+      </div>
+    </section>
+
+    <section class="product-section">
+      <div class="container">
+        <span class="section-label">Producto destacado</span>
+        <div id="product-card">
+          <div class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 12px;">Cargando producto...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="sticky-cta">
+      <div class="sticky-cta-inner">
+        <a id="sticky-whatsapp" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+          </svg>
+          <span>Hablar por WhatsApp</span>
+        </a>
+      </div>
+    </div>
+
+    <footer class="footer-minimal">
+      <div class="container">
+        <p>
+          © 2026 Ecoalfa. Todos los derechos reservados.
+          <br />
+          <a href="./politicas.html">Políticas</a> ·
+          <a href="./condiciones-servicio.html">Condiciones</a> ·
+          <a href="./eliminacion-datos.html">Eliminación de datos</a>
+        </p>
+      </div>
+    </footer>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+      import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+      import { getDatabase, ref as dbRef, get, child } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBs85ZtM0tUI5XYypWTze-8xfPJj3EaV5g",
+        authDomain: "ecoalfa-6f9d1.firebaseapp.com",
+        projectId: "ecoalfa-6f9d1",
+        storageBucket: "ecoalfa-6f9d1.appspot.com",
+        messagingSenderId: "123456789",
+        appId: "1:123456789:web:abcdef",
+        databaseURL: "https://ecoalfa-6f9d1-default-rtdb.firebaseio.com",
+        measurementId: "G-77WWNZFNY6"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const rtdb = getDatabase(app);
+
+      const DEFAULT_CONFIG = {
+        whatsappNumber: "573052209603",
+        whatsappMessage: "Hola Ecoalfa, quiero conocer más sobre sus productos y servicios."
+      };
+
+      let config = { ...DEFAULT_CONFIG };
+
+      function escapeHtml(text) {
+        if (!text) return "";
+        return String(text)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function formatPrice(value) {
+        const raw = String(value || "").replace(/[^0-9]/g, "");
+        const num = parseFloat(raw);
+        if (!raw || isNaN(num)) return value || "";
+        return new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(num);
+      }
+
+      async function loadConfig() {
+        try {
+          const configRef = doc(db, "config", "siteConfig");
+          const snapshot = await getDoc(configRef);
+          if (snapshot.exists()) {
+            config = { ...DEFAULT_CONFIG, ...snapshot.data() };
+          }
+        } catch (error) {
+          console.warn("No se pudo cargar la configuración:", error);
+        }
+      }
+
+      async function loadStoreItems() {
+        let items = [];
+
+        try {
+          const storeSnap = await get(child(dbRef(rtdb), "siteMedia/store"));
+          if (storeSnap.exists()) {
+            items = Object.entries(storeSnap.val()).map(([id, item]) => ({ id, ...item }));
+          }
+        } catch (error) {
+          console.warn("Error leyendo productos:", error);
+        }
+
+        return items;
+      }
+
+      function getFeaturedProduct(items) {
+        const params = new URLSearchParams(window.location.search);
+        const productId = params.get("producto");
+
+        if (productId) {
+          const found = items.find((item) => item.id === productId);
+          if (found) return found;
+        }
+
+        return items[0] || null;
+      }
+
+      function setStickyWhatsApp(number, message) {
+        const link = document.getElementById("sticky-whatsapp");
+        if (link) {
+          link.href = `https://wa.me/${number}?text=${encodeURIComponent(message || config.whatsappMessage)}`;
+        }
+      }
+
+      function renderFeaturedProduct(item) {
+        const container = document.getElementById("product-card");
+        if (!container) return;
+
+        if (!item) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <h3>Próximamente</h3>
+              <p>Estamos preparando nuestros productos naturales. Vuelve pronto.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const name = escapeHtml(item.name || "Producto");
+        const rawPrice = item.price || "";
+        const price = formatPrice(rawPrice);
+        const description = escapeHtml(item.description || "");
+        const imageUrl = escapeHtml(item.url || "");
+        const number = config.whatsappNumber || DEFAULT_CONFIG.whatsappNumber;
+
+        const productMessage = `Hola Ecoalfa, me interesa comprar el siguiente producto de la Tienda Naturista:\n\n*${item.name || "Producto"}*\nPrecio: ${price}\n${description ? `Descripción: ${description}\n\n` : "\n"}¿Está disponible?`;
+        const whatsappLink = `https://wa.me/${number}?text=${encodeURIComponent(productMessage)}`;
+
+        container.innerHTML = `
+          <article class="product-card">
+            <div class="product-image">
+              <span class="product-badge">Destacado</span>
+              <img src="${imageUrl}" alt="${name}" loading="eager" />
+            </div>
+            <div class="product-info">
+              <h2 class="product-name">${name}</h2>
+              <p class="product-description">${description || "Producto natural seleccionado para tu bienestar."}</p>
+              <span class="product-price">${price || "Consultar precio"}</span>
+              <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="cta-button cta-whatsapp">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+                Comprar por WhatsApp
+              </a>
+              <a href="./landing.html#tienda" class="cta-button cta-secondary">
+                Ver más productos
+              </a>
+            </div>
+          </article>
+        `;
+      }
+
+      async function initVideo() {
+        const video = document.getElementById("hero-video");
+        const fallback = document.getElementById("video-fallback");
+        if (!video || !fallback) return;
+
+        // Reemplaza esta URL con el video en formato 9:16 que subas
+        const VIDEO_URL = "";
+
+        if (VIDEO_URL) {
+          video.querySelector("source").src = VIDEO_URL;
+          video.load();
+          try {
+            await video.play();
+            fallback.classList.remove("active");
+          } catch (error) {
+            console.warn("No se pudo reproducir el video automáticamente:", error);
+          }
+        }
+      }
+
+      async function init() {
+        await loadConfig();
+        setStickyWhatsApp(config.whatsappNumber, config.whatsappMessage);
+        await initVideo();
+        const items = await loadStoreItems();
+        const featured = getFeaturedProduct(items);
+        renderFeaturedProduct(featured);
+      }
+
+      init().catch((error) => {
+        console.error("Error inicializando la página:", error);
+      });
+    </script>
+  </body>
+</html>

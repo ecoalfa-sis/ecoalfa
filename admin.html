@@ -12,8 +12,8 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
       import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-      import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, addDoc, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-      import { getDatabase, ref as dbRef, push, set, get, remove, child } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+      import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, getDocs, addDoc, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+      import { getDatabase, ref as dbRef, push, set, update, get, remove, child } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyBs85ZtM0tUI5XYypWTze-8xfPJj3EaV5g",
@@ -42,6 +42,7 @@
       let pendingGalleryFiles = [];
       let pendingHeroFiles = [];
       let pendingStoreFiles = [];
+      let pendingFacebookVideoFiles = [];
 
       const DEFAULT_CONFIG = {
         companyName: "Ecoalfa",
@@ -68,6 +69,10 @@
         plansButtonText: "Afiliarme",
         plansWhatsAppNumber: "573228971484",
         plansWhatsAppMessage: "Hola, quiero conocer más sobre el plan",
+        facebookLandingVideoUrl: "",
+        facebookLandingFeaturedProduct: "",
+        facebookLandingTitle: "Bienestar natural para tu vida",
+        facebookLandingSubtitle: "Productos naturales y atención médica personalizada",
         plans: [
           {
             id: "gold",
@@ -203,6 +208,10 @@
           plansButtonText: document.getElementById("cfg-plansButtonText").value.trim(),
           plansWhatsAppNumber: document.getElementById("cfg-plansWhatsAppNumber").value.trim(),
           plansWhatsAppMessage: document.getElementById("cfg-plansWhatsAppMessage").value.trim(),
+          facebookLandingVideoUrl: document.getElementById("cfg-facebookLandingVideoUrl").value.trim(),
+          facebookLandingFeaturedProduct: document.getElementById("cfg-facebookLandingFeaturedProduct").value.trim(),
+          facebookLandingTitle: document.getElementById("cfg-facebookLandingTitle").value.trim(),
+          facebookLandingSubtitle: document.getElementById("cfg-facebookLandingSubtitle").value.trim(),
           plans: sanitizePlans(readPlansConfig())
         };
 
@@ -219,7 +228,7 @@
           heroItems: deleteField()
         }, { merge: true });
 
-        currentConfig = { ...payload, promoItems: promoMediaItems, galleryItems: galleryMediaItems, heroItems: heroMediaItems };
+        currentConfig = { ...payload, promoItems: promoMediaItems, galleryItems: galleryMediaItems, heroItems: heroMediaItems, storeItems: storeMediaItems };
         showMessage("Configuración guardada correctamente.", "success");
       }
 
@@ -304,12 +313,16 @@
 
       function renderAdmin() {
         const cfg = currentConfig || DEFAULT_CONFIG;
+        const storeOptions = (cfg.storeItems || []).map((item) =>
+          `<option value="${item.id}" ${cfg.facebookLandingFeaturedProduct === item.id ? "selected" : ""}>${escapeHtml(item.name || "Producto")}</option>`
+        ).join("");
+
         appContainer.innerHTML = `
           <div class="min-h-screen">
             <header class="bg-white shadow-sm ring-1 ring-slate-200">
               <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                 <div class="flex items-center gap-3">
-                  <img src="./assets/ecoalfa-logo.jpeg" alt="Ecoalfa" class="h-10 w-10 rounded-lg object-contain" />
+                  <img src="./assets/ecoalfa-logo.png" alt="Ecoalfa" class="h-10 w-10 rounded-lg object-contain" />
                   <div>
                     <h1 class="text-lg font-bold text-slate-900">Administración Ecoalfa</h1>
                     <p class="text-xs text-slate-500">${currentUserProfile?.displayName || currentUser?.email} · ${currentUserProfile?.role || "Sin rol"}</p>
@@ -317,52 +330,67 @@
                 </div>
                 <div class="flex gap-3">
                   <a href="./landing.html" target="_blank" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Ver landing</a>
+                  <a href="./ecoalfa.html" target="_blank" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Ver Facebook Ads</a>
                   <button id="logout-btn" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Salir</button>
                 </div>
               </div>
             </header>
+
+            <nav class="bg-white border-b border-slate-200 sticky top-0 z-10">
+              <div class="mx-auto max-w-6xl px-6 flex gap-1 overflow-x-auto">
+                <button data-tab="empresa" class="admin-tab active px-4 py-3 text-sm font-medium border-b-2 border-emerald-600 text-emerald-700 whitespace-nowrap">Empresa</button>
+                <button data-tab="landing" class="admin-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap">Landing</button>
+                <button data-tab="media" class="admin-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap">Media</button>
+                <button data-tab="tienda" class="admin-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap">Tienda</button>
+                <button data-tab="facebook" class="admin-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap">Facebook Ads</button>
+              </div>
+            </nav>
 
             <main class="mx-auto max-w-6xl p-6">
               <div class="mb-6 rounded-2xl bg-blue-50 p-4 text-sm text-blue-800">
                 <strong>Nota importante:</strong> Las imágenes y videos subidos por archivo se guardan en Realtime Database como base64. Como el base64 aumenta el tamaño ~33%, el límite seguro es <strong>máx. 7 MB por archivo</strong>. No se comprimen ni pierden calidad. Las URLs externas se guardan en Firestore. No expiran.
               </div>
 
-              <div class="grid gap-6 lg:grid-cols-[1fr_420px]">
-                <div class="space-y-6">
-                  <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                    <h2 class="text-lg font-bold text-slate-900">Información de la empresa</h2>
-                    <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                      <div class="sm:col-span-2">
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Nombre de la empresa</label>
-                        <input id="cfg-companyName" value="${escapeHtml(cfg.companyName)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                      </div>
-                      <div class="sm:col-span-2">
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Slogan</label>
-                        <input id="cfg-slogan" value="${escapeHtml(cfg.slogan)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                      </div>
-                      <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Teléfono</label>
-                        <input id="cfg-phone" value="${escapeHtml(cfg.phone)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                      </div>
-                      <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">WhatsApp (con código de país)</label>
-                        <input id="cfg-whatsappNumber" value="${escapeHtml(cfg.whatsappNumber)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                      </div>
-                      <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Correo electrónico</label>
-                        <input id="cfg-email" type="email" value="${escapeHtml(cfg.email)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                      </div>
-                      <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Ciudad / Dirección</label>
-                        <input id="cfg-address" value="${escapeHtml(cfg.address)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                      </div>
-                      <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Zona horaria</label>
-                        <input id="cfg-timezone" value="${escapeHtml(cfg.timezone)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                      </div>
+              <!-- TAB: EMPRESA -->
+              <div id="tab-empresa" class="admin-panel">
+                <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                  <h2 class="text-lg font-bold text-slate-900">Información de la empresa</h2>
+                  <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                      <label class="mb-1 block text-sm font-medium text-slate-700">Nombre de la empresa</label>
+                      <input id="cfg-companyName" value="${escapeHtml(cfg.companyName)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label class="mb-1 block text-sm font-medium text-slate-700">Slogan</label>
+                      <input id="cfg-slogan" value="${escapeHtml(cfg.slogan)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-sm font-medium text-slate-700">Teléfono</label>
+                      <input id="cfg-phone" value="${escapeHtml(cfg.phone)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-sm font-medium text-slate-700">WhatsApp (con código de país)</label>
+                      <input id="cfg-whatsappNumber" value="${escapeHtml(cfg.whatsappNumber)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-sm font-medium text-slate-700">Correo electrónico</label>
+                      <input id="cfg-email" type="email" value="${escapeHtml(cfg.email)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-sm font-medium text-slate-700">Ciudad / Dirección</label>
+                      <input id="cfg-address" value="${escapeHtml(cfg.address)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-sm font-medium text-slate-700">Zona horaria</label>
+                      <input id="cfg-timezone" value="${escapeHtml(cfg.timezone)}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
                     </div>
                   </div>
+                </div>
+              </div>
 
+              <!-- TAB: LANDING -->
+              <div id="tab-landing" class="admin-panel hidden">
+                <div class="space-y-6">
                   <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                     <h2 class="text-lg font-bold text-slate-900">Contenido principal</h2>
                     <div class="mt-5 space-y-4">
@@ -430,27 +458,24 @@
                       </div>
                     </div>
                   </div>
-
-                  <button id="save-config" class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800">Guardar configuración</button>
-                  <p id="admin-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
                 </div>
+              </div>
 
-                <div class="space-y-6">
+              <!-- TAB: MEDIA -->
+              <div id="tab-media" class="admin-panel hidden">
+                <div class="grid gap-6 lg:grid-cols-2">
                   <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                     <h2 class="text-lg font-bold text-slate-900">Carrusel principal (Hero)</h2>
-                    <p class="mt-1 text-sm text-slate-500">Imágenes y videos que aparecen en el cuadro principal de la landing, en la sección superior.</p>
-
+                    <p class="mt-1 text-sm text-slate-500">Imágenes y videos que aparecen en el cuadro principal de la landing.</p>
                     <div class="mt-5 space-y-4">
                       <div class="rounded-xl bg-blue-50 p-4 text-sm text-blue-800">
-                        <strong>Tamaño recomendado:</strong> 1080 × 1080 px (cuadrado) o 1920 × 1080 px (Full HD). Máximo 7 MB. El cuadro se muestra cuadrado, pero se adapta con recorte automático.
+                        <strong>Tamaño recomendado:</strong> 1080×1080 px o 1920×1080 px. Máximo 7 MB.
                       </div>
-
                       <div>
                         <label class="mb-1 block text-sm font-medium text-slate-700">URL de imagen o video</label>
                         <input id="hero-url" type="text" placeholder="https://..." class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
                       </div>
                       <button id="add-hero-url" class="w-full rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">Agregar por URL</button>
-
                       <div class="border-t border-slate-200 pt-4">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">O subir archivo directamente</p>
                         <div class="mt-2">
@@ -458,7 +483,6 @@
                         </div>
                         <button id="upload-hero" class="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Subir archivos</button>
                       </div>
-
                       <div id="hero-list" class="space-y-3">
                         ${renderPromoItems(cfg.heroItems, "hero")}
                       </div>
@@ -466,48 +490,8 @@
                   </div>
 
                   <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                    <h2 class="text-lg font-bold text-slate-900">Tienda Naturista</h2>
-                    <p class="mt-1 text-sm text-slate-500">Agrega productos a la tienda con su imagen, descripción y precio.</p>
-
-                    <div class="mt-5 space-y-4">
-                      <div class="grid gap-4 sm:grid-cols-2">
-                        <div class="sm:col-span-2">
-                          <label class="mb-1 block text-sm font-medium text-slate-700">Imagen (URL o archivo abajo)</label>
-                          <input id="store-url" type="text" placeholder="https://..." class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                        </div>
-                        <div>
-                          <label class="mb-1 block text-sm font-medium text-slate-700">Nombre del producto</label>
-                          <input id="store-name" type="text" placeholder="Ej: Aceite de Coco" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                        </div>
-                        <div>
-                          <label class="mb-1 block text-sm font-medium text-slate-700">Precio</label>
-                          <input id="store-price" type="text" placeholder="Ej: $25.000" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
-                        </div>
-                        <div class="sm:col-span-2">
-                          <label class="mb-1 block text-sm font-medium text-slate-700">Descripción corta</label>
-                          <textarea id="store-description" rows="2" placeholder="Ej: 100% natural, ideal para el cabello..." class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
-                        </div>
-                      </div>
-                      <button id="add-store-url" class="w-full rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">Agregar por URL</button>
-
-                      <div class="border-t border-slate-200 pt-4">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">O subir imagen directamente</p>
-                        <div class="mt-2">
-                          <input id="store-files" type="file" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700" />
-                        </div>
-                        <button id="upload-store" class="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Subir y agregar</button>
-                      </div>
-
-                      <div id="store-list" class="space-y-3">
-                        ${renderStoreItems(cfg.storeItems)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                     <h2 class="text-lg font-bold text-slate-900">Modal publicitario</h2>
                     <p class="mt-1 text-sm text-slate-500">Imágenes y videos que aparecerán en un modal al abrir la landing page.</p>
-
                     <div class="mt-5 space-y-4">
                       <label class="flex items-center gap-3 text-sm text-slate-700">
                         <input id="cfg-showPromoModal" type="checkbox" ${cfg.showPromoModal ? "checked" : ""} class="h-4 w-4 rounded border-slate-300 text-emerald-600" />
@@ -521,46 +505,34 @@
                         <label class="mb-1 block text-sm font-medium text-slate-700">Intervalo entre slides (ms)</label>
                         <input id="cfg-promoInterval" type="number" value="${cfg.promoInterval}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
                       </div>
-
-                      <div class="rounded-xl bg-blue-50 p-4 text-sm text-blue-800">
-                        <strong>Opción rápida:</strong> pega una URL de imagen o video. Puedes subir tus archivos a GitHub, Imgur, Cloudinary, YouTube, etc. y pegar aquí el enlace.
-                      </div>
-
                       <div>
                         <label class="mb-1 block text-sm font-medium text-slate-700">URL de imagen o video</label>
                         <input id="promo-url" type="text" placeholder="https://..." class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
                         <p class="mt-1 text-xs text-slate-500">Videos de YouTube: usa la URL completa o la URL de embed.</p>
                       </div>
                       <button id="add-promo-url" class="w-full rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">Agregar por URL</button>
-
                       <div class="border-t border-slate-200 pt-4">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">O subir imagen/video directamente</p>
-                        <div class="mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
-                          Imágenes y videos subidos por archivo: se guardan en Realtime Database (base64, hasta 7 MB) sin pérdida de calidad. Se genera automáticamente una miniatura para videos. No expiran.
-                        </div>
                         <div class="mt-2">
                           <input id="promo-files" type="file" accept="image/*,video/*" multiple class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700" />
                         </div>
                         <button id="upload-promo" class="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Subir archivos</button>
                       </div>
-
                       <div id="promo-list" class="space-y-3">
                         ${renderPromoItems(cfg.promoItems, "promo")}
                       </div>
                     </div>
                   </div>
 
-                  <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                  <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:col-span-2">
                     <h2 class="text-lg font-bold text-slate-900">Galería de Nosotros</h2>
                     <p class="mt-1 text-sm text-slate-500">Imágenes y videos fijos que aparecen en la sección Nosotros de la landing.</p>
-
                     <div class="mt-5 space-y-4">
                       <div>
                         <label class="mb-1 block text-sm font-medium text-slate-700">URL de imagen o video</label>
                         <input id="gallery-url" type="text" placeholder="https://..." class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
                       </div>
                       <button id="add-gallery-url" class="w-full rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">Agregar por URL</button>
-
                       <div class="border-t border-slate-200 pt-4">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">O subir archivo directamente</p>
                         <div class="mt-2">
@@ -568,13 +540,117 @@
                         </div>
                         <button id="upload-gallery" class="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Subir archivos</button>
                       </div>
-
                       <div id="gallery-list" class="space-y-3">
                         ${renderPromoItems(cfg.galleryItems, "gallery")}
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- TAB: TIENDA -->
+              <div id="tab-tienda" class="admin-panel hidden">
+                <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                  <h2 class="text-lg font-bold text-slate-900">Tienda Naturista</h2>
+                  <p class="mt-1 text-sm text-slate-500">Agrega productos a la tienda con su imagen, descripción y precio.</p>
+                  <div class="mt-5 space-y-4">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <div class="sm:col-span-2">
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Imagen (URL o archivo abajo)</label>
+                        <input id="store-url" type="text" placeholder="https://..." class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Nombre del producto</label>
+                        <input id="store-name" type="text" placeholder="Ej: Aceite de Coco" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Precio</label>
+                        <input id="store-price" type="text" placeholder="Ej: $25.000" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                      </div>
+                      <div class="sm:col-span-2">
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Descripción corta</label>
+                        <textarea id="store-description" rows="2" placeholder="Ej: 100% natural, ideal para el cabello..." class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"></textarea>
+                      </div>
+                    </div>
+                    <button id="add-store-url" class="w-full rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">Agregar por URL</button>
+                    <div class="border-t border-slate-200 pt-4">
+                      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">O subir imagen directamente</p>
+                      <div class="mt-2">
+                        <input id="store-files" type="file" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700" />
+                      </div>
+                      <button id="upload-store" class="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Subir y agregar</button>
+                    </div>
+                    <div id="store-list" class="space-y-3">
+                      ${renderStoreItems(cfg.storeItems)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB: FACEBOOK ADS -->
+              <div id="tab-facebook" class="admin-panel hidden">
+                <div class="space-y-6">
+                  <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                    <h2 class="text-lg font-bold text-slate-900">Página de Facebook Ads</h2>
+                    <p class="mt-1 text-sm text-slate-500">Configura la landing page para tráfico desde Facebook. Se muestra en <a href="./ecoalfa.html" target="_blank" class="text-emerald-700 font-medium underline">ecoalfa.html</a>.</p>
+                    <div class="mt-5 space-y-4">
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Título sobre el video</label>
+                        <input id="cfg-facebookLandingTitle" value="${escapeHtml(cfg.facebookLandingTitle || "Bienestar natural para tu vida")}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Subtítulo sobre el video</label>
+                        <input id="cfg-facebookLandingSubtitle" value="${escapeHtml(cfg.facebookLandingSubtitle || "Productos naturales y atención médica personalizada")}" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Producto destacado</label>
+                        <select id="cfg-facebookLandingFeaturedProduct" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+                          <option value="">Primer producto disponible</option>
+                          ${storeOptions}
+                        </select>
+                        <p class="mt-1 text-xs text-slate-500">Selecciona qué producto de la Tienda Naturista se mostrará en la página de Facebook Ads.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                    <h2 class="text-lg font-bold text-slate-900">Video promocional (formato 9:16)</h2>
+                    <p class="mt-1 text-sm text-slate-500">Video vertical que aparece en la parte superior de la página de Facebook Ads.</p>
+                    <div class="mt-5 space-y-4">
+                      <div class="rounded-xl bg-blue-50 p-4 text-sm text-blue-800">
+                        <strong>Recomendado:</strong> Video vertical 1080×1920 px (formato 9:16). Máximo 7 MB. Formato MP4.
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">URL del video</label>
+                        <input id="cfg-facebookLandingVideoUrl" value="${escapeHtml(cfg.facebookLandingVideoUrl || "")}" placeholder="https://..." class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                        <p class="mt-1 text-xs text-slate-500">Pega la URL directa de un video MP4. Ej: https://tudominio.com/video.mp4</p>
+                      </div>
+                      <div class="border-t border-slate-200 pt-4">
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">O subir video directamente</p>
+                        <div class="mt-2">
+                          <input id="facebook-video-files" type="file" accept="video/*" class="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700" />
+                        </div>
+                        <button id="upload-facebook-video" class="mt-2 w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Subir video</button>
+                      </div>
+                      ${cfg.facebookLandingVideoUrl ? `
+                        <div class="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+                          <strong>Video actual:</strong> <a href="${escapeHtml(cfg.facebookLandingVideoUrl)}" target="_blank" class="underline">Ver video</a>
+                        </div>
+                      ` : ""}
+                    </div>
+                  </div>
+
+                  <div class="rounded-2xl bg-slate-50 p-6 ring-1 ring-slate-200">
+                    <h3 class="text-sm font-bold text-slate-900">Vista previa</h3>
+                    <p class="mt-1 text-sm text-slate-500">Guarda los cambios y abre la página para ver el resultado.</p>
+                    <a href="./ecoalfa.html" target="_blank" class="mt-3 inline-block rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">Abrir ecoalfa.html</a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-6">
+                <button id="save-config" class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white transition hover:bg-emerald-800">Guardar configuración</button>
+                <p id="admin-message" class="hidden rounded-xl px-4 py-3 text-sm"></p>
               </div>
             </main>
           </div>
@@ -618,19 +694,54 @@
         if (!items || items.length === 0) {
           return `<p class="text-sm text-slate-500">No hay productos en la tienda.</p>`;
         }
-        return items.map((item) => `
-          <div class="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
-            <img src="${item.url}" alt="" class="h-16 w-16 rounded-lg object-cover bg-slate-100" />
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center justify-between">
-                <p class="truncate text-sm font-bold text-slate-900">${item.name}</p>
-                <p class="text-sm font-semibold text-emerald-700">${item.price}</p>
+        return items.map((item) => {
+          const id = item.id || "";
+          const source = item.source || "rtdb";
+          return `
+            <div class="rounded-xl border border-slate-200 p-3" data-store-item="${id}">
+              <div class="flex items-center gap-3">
+                <img src="${item.url}" alt="" class="store-item-img h-16 w-16 rounded-lg object-cover bg-slate-100" />
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center justify-between">
+                    <p class="store-item-name truncate text-sm font-bold text-slate-900">${escapeHtml(item.name)}</p>
+                    <p class="store-item-price text-sm font-semibold text-emerald-700">${escapeHtml(item.price)}</p>
+                  </div>
+                  <p class="store-item-desc truncate text-xs text-slate-500">${escapeHtml(item.description || "Sin descripción")}</p>
+                </div>
+                <button data-edit-store="${id}" class="rounded-lg px-2 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50">Editar</button>
+                <button data-remove-store="${id}" class="rounded-lg px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50">Quitar</button>
               </div>
-              <p class="truncate text-xs text-slate-500">${item.description || "Sin descripción"}</p>
+              <div data-edit-form="${id}" class="hidden mt-4 border-t border-slate-200 pt-4 space-y-3">
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-600">Nombre</label>
+                    <input data-field="name" data-id="${id}" value="${escapeHtml(item.name)}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-600">Precio</label>
+                    <input data-field="price" data-id="${id}" value="${escapeHtml(item.price)}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+                  </div>
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">Descripción</label>
+                  <textarea data-field="description" data-id="${id}" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">${escapeHtml(item.description || "")}</textarea>
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">Imagen (URL)</label>
+                  <input data-field="url" data-id="${id}" value="${escapeHtml(item.url)}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">O subir nueva imagen</label>
+                  <input data-field="image-file" data-id="${id}" type="file" accept="image/*" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700" />
+                </div>
+                <div class="flex gap-2">
+                  <button data-save-store="${id}" data-source="${source}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">Guardar cambios</button>
+                  <button data-cancel-edit="${id}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Cancelar</button>
+                </div>
+              </div>
             </div>
-            <button data-remove-store="${item.id || ""}" class="rounded-lg px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50">Quitar</button>
-          </div>
-        `).join("");
+          `;
+        }).join("");
       }
 
       function bindAdminEvents() {
@@ -644,8 +755,23 @@
         document.getElementById("add-hero-url").addEventListener("click", addHeroUrl);
         document.getElementById("upload-store").addEventListener("click", uploadStoreFiles);
         document.getElementById("add-store-url").addEventListener("click", addStoreUrl);
+        document.getElementById("upload-facebook-video").addEventListener("click", uploadFacebookVideo);
 
-
+        document.querySelectorAll(".admin-tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            const target = tab.dataset.tab;
+            document.querySelectorAll(".admin-tab").forEach((t) => {
+              t.classList.remove("border-emerald-600", "text-emerald-700");
+              t.classList.add("border-transparent", "text-slate-600");
+            });
+            tab.classList.add("border-emerald-600", "text-emerald-700");
+            tab.classList.remove("border-transparent", "text-slate-600");
+            document.querySelectorAll(".admin-panel").forEach((panel) => {
+              panel.classList.add("hidden");
+            });
+            document.getElementById(`tab-${target}`)?.classList.remove("hidden");
+          });
+        });
 
         async function deleteMediaItem(id, item, rtdbPath) {
           const errors = [];
@@ -749,6 +875,93 @@
           });
         });
 
+        document.querySelectorAll("[data-edit-store]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const id = button.dataset.editStore;
+            const form = document.querySelector(`[data-edit-form="${id}"]`);
+            if (form) {
+              form.classList.toggle("hidden");
+            }
+          });
+        });
+
+        document.querySelectorAll("[data-cancel-edit]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const id = button.dataset.cancelEdit;
+            const form = document.querySelector(`[data-edit-form="${id}"]`);
+            if (form) form.classList.add("hidden");
+          });
+        });
+
+        document.querySelectorAll("[data-save-store]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const id = button.dataset.saveStore;
+            const source = button.dataset.source;
+            const item = storeMediaItems.find((item) => item.id === id);
+            if (!item) return;
+
+            const nameVal = document.querySelector(`[data-field="name"][data-id="${id}"]`)?.value.trim() || "";
+            const priceVal = document.querySelector(`[data-field="price"][data-id="${id}"]`)?.value.trim() || "";
+            const descVal = document.querySelector(`[data-field="description"][data-id="${id}"]`)?.value.trim() || "";
+            const urlVal = document.querySelector(`[data-field="url"][data-id="${id}"]`)?.value.trim() || "";
+            const fileInput = document.querySelector(`[data-field="image-file"][data-id="${id}"]`);
+
+            if (!nameVal || !priceVal) {
+              showMessage("Nombre y precio son obligatorios.", "error");
+              return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Guardando...";
+
+            try {
+              let finalUrl = urlVal;
+
+              if (fileInput && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                if (file.size > 7 * 1024 * 1024) {
+                  showMessage("La imagen es muy grande: máximo 7 MB.", "error");
+                  button.disabled = false;
+                  button.textContent = "Guardar cambios";
+                  return;
+                }
+                const base64 = await readFileAsDataURL(file);
+                if (typeof base64 === "string" && base64.startsWith("data:")) {
+                  finalUrl = base64;
+                }
+              }
+
+              const updates = {
+                name: nameVal,
+                price: priceVal,
+                description: descVal,
+                url: finalUrl
+              };
+
+              if (source === "rtdb") {
+                await update(dbRef(rtdb, `siteMedia/store/${id}`), updates);
+              } else {
+                await updateDoc(doc(db, "siteMedia", id), updates);
+              }
+
+              const idx = storeMediaItems.findIndex((item) => item.id === id);
+              if (idx >= 0) {
+                storeMediaItems[idx] = { ...storeMediaItems[idx], ...updates };
+              }
+              currentConfig.storeItems = storeMediaItems;
+              document.getElementById("store-list").innerHTML = renderStoreItems(currentConfig.storeItems);
+              bindAdminEvents();
+              showMessage("Producto actualizado correctamente.", "success");
+            } catch (error) {
+              console.error("Error actualizando producto:", error);
+              showMessage("Error al actualizar: " + (error.message || "desconocido"), "error");
+            } finally {
+              button.disabled = false;
+              button.textContent = "Guardar cambios";
+            }
+          });
+        });
+
         document.getElementById("promo-files").addEventListener("change", (event) => {
           pendingPromoFiles = Array.from(event.target.files);
         });
@@ -763,6 +976,10 @@
 
         document.getElementById("store-files").addEventListener("change", (event) => {
           pendingStoreFiles = Array.from(event.target.files);
+        });
+
+        document.getElementById("facebook-video-files").addEventListener("change", (event) => {
+          pendingFacebookVideoFiles = Array.from(event.target.files);
         });
       }
 
@@ -1004,6 +1221,56 @@
         } finally {
           button.disabled = false;
           button.textContent = "Subir y agregar";
+        }
+      }
+
+      async function uploadFacebookVideo() {
+        if (!pendingFacebookVideoFiles.length) {
+          showMessage("Selecciona un video.", "error");
+          return;
+        }
+        const file = pendingFacebookVideoFiles[0];
+        if (file.size > 7 * 1024 * 1024) {
+          showMessage("El video es muy grande: máximo 7 MB.", "error");
+          return;
+        }
+
+        const button = document.getElementById("upload-facebook-video");
+        button.disabled = true;
+        button.textContent = "Subiendo...";
+
+        try {
+          const base64 = await readFileAsDataURL(file);
+          if (typeof base64 !== "string" || !base64.startsWith("data:")) {
+            throw new Error("El archivo no se convirtió correctamente.");
+          }
+
+          const videoRef = push(dbRef(rtdb, "siteMedia/facebookVideo"));
+          await set(videoRef, {
+            url: base64,
+            name: file.name,
+            type: "video",
+            size: base64.length,
+            kind: "facebookVideo",
+            uploadedAt: Date.now()
+          });
+
+          const videoUrl = `rtdb:facebookVideo/${videoRef.key}`;
+          currentConfig.facebookLandingVideoUrl = videoUrl;
+
+          const urlInput = document.getElementById("cfg-facebookLandingVideoUrl");
+          if (urlInput) urlInput.value = videoUrl;
+
+          document.getElementById("facebook-video-files").value = "";
+          pendingFacebookVideoFiles = [];
+
+          showMessage("Video subido correctamente. Guarda la configuración para aplicar los cambios.", "success");
+        } catch (error) {
+          console.error("Error subiendo video de Facebook:", error);
+          showMessage(error.message || "Error subiendo el video.", "error");
+        } finally {
+          button.disabled = false;
+          button.textContent = "Subir video";
         }
       }
 

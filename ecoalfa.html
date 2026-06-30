@@ -452,11 +452,11 @@
             <path d="m10 8 6 4-6 4V8Z" />
           </svg>
           <p>Video promocional de Ecoalfa</p>
-          <p style="font-size: 0.85rem; opacity: 0.7;">Sube tu video en formato 9:16</p>
+          <p style="font-size: 0.85rem; opacity: 0.7;">Configura tu video desde el panel de administración</p>
         </div>
         <div class="video-overlay">
-          <h1>Bienestar natural para tu vida</h1>
-          <p>Productos naturales y atención médica personalizada</p>
+          <h1 id="video-title">Bienestar natural para tu vida</h1>
+          <p id="video-subtitle">Productos naturales y atención médica personalizada</p>
         </div>
         <div class="scroll-hint">⌄</div>
       </div>
@@ -506,9 +506,9 @@
         apiKey: "AIzaSyBs85ZtM0tUI5XYypWTze-8xfPJj3EaV5g",
         authDomain: "ecoalfa-6f9d1.firebaseapp.com",
         projectId: "ecoalfa-6f9d1",
-        storageBucket: "ecoalfa-6f9d1.appspot.com",
-        messagingSenderId: "123456789",
-        appId: "1:123456789:web:abcdef",
+        storageBucket: "ecoalfa-6f9d1.firebasestorage.app",
+        messagingSenderId: "760816764581",
+        appId: "1:760816764581:web:31ef204b23ca5980852f4c",
         databaseURL: "https://ecoalfa-6f9d1-default-rtdb.firebaseio.com",
         measurementId: "G-77WWNZFNY6"
       };
@@ -518,8 +518,12 @@
       const rtdb = getDatabase(app);
 
       const DEFAULT_CONFIG = {
-        whatsappNumber: "573052209603",
-        whatsappMessage: "Hola Ecoalfa, quiero conocer más sobre sus productos y servicios."
+        whatsappNumber: "573228971484",
+        whatsappMessage: "Hola Ecoalfa, quiero conocer más sobre sus productos y servicios.",
+        facebookLandingVideoUrl: "",
+        facebookLandingFeaturedProduct: "",
+        facebookLandingTitle: "Bienestar natural para tu vida",
+        facebookLandingSubtitle: "Productos naturales y atención médica personalizada"
       };
 
       let config = { ...DEFAULT_CONFIG };
@@ -553,6 +557,18 @@
           if (snapshot.exists()) {
             config = { ...DEFAULT_CONFIG, ...snapshot.data() };
           }
+
+          if (config.facebookLandingVideoUrl && config.facebookLandingVideoUrl.startsWith("rtdb:facebookVideo/")) {
+            const videoKey = config.facebookLandingVideoUrl.replace("rtdb:facebookVideo/", "");
+            try {
+              const videoSnap = await get(child(dbRef(rtdb), `siteMedia/facebookVideo/${videoKey}`));
+              if (videoSnap.exists() && videoSnap.val().url) {
+                config._facebookVideoDataUrl = videoSnap.val().url;
+              }
+            } catch (e) {
+              console.warn("No se pudo cargar el video desde RTDB:", e);
+            }
+          }
         } catch (error) {
           console.warn("No se pudo cargar la configuración:", error);
         }
@@ -579,6 +595,11 @@
 
         if (productId) {
           const found = items.find((item) => item.id === productId);
+          if (found) return found;
+        }
+
+        if (config.facebookLandingFeaturedProduct) {
+          const found = items.find((item) => item.id === config.facebookLandingFeaturedProduct);
           if (found) return found;
         }
 
@@ -645,11 +666,14 @@
         const fallback = document.getElementById("video-fallback");
         if (!video || !fallback) return;
 
-        // Reemplaza esta URL con el video en formato 9:16 que subas
-        const VIDEO_URL = "";
+        let videoUrl = config.facebookLandingVideoUrl || "";
 
-        if (VIDEO_URL) {
-          video.querySelector("source").src = VIDEO_URL;
+        if (videoUrl.startsWith("rtdb:facebookVideo/") && config._facebookVideoDataUrl) {
+          videoUrl = config._facebookVideoDataUrl;
+        }
+
+        if (videoUrl && !videoUrl.startsWith("rtdb:")) {
+          video.querySelector("source").src = videoUrl;
           video.load();
           try {
             await video.play();
@@ -660,9 +684,21 @@
         }
       }
 
+      function applyVideoOverlayText() {
+        const titleEl = document.getElementById("video-title");
+        const subtitleEl = document.getElementById("video-subtitle");
+        if (titleEl && config.facebookLandingTitle) {
+          titleEl.textContent = config.facebookLandingTitle;
+        }
+        if (subtitleEl && config.facebookLandingSubtitle) {
+          subtitleEl.textContent = config.facebookLandingSubtitle;
+        }
+      }
+
       async function init() {
         await loadConfig();
         setStickyWhatsApp(config.whatsappNumber, config.whatsappMessage);
+        applyVideoOverlayText();
         await initVideo();
         const items = await loadStoreItems();
         const featured = getFeaturedProduct(items);

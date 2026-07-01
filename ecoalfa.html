@@ -291,15 +291,15 @@
         letter-spacing: 0.02em;
         box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
         margin: 0 auto 16px;
-        animation: pulse-color 1.5s ease-in-out infinite;
+        animation: pulse-zoom 1.5s ease-in-out infinite;
       }
 
-      @keyframes pulse-color {
+      @keyframes pulse-zoom {
         0%, 100% {
-          background: #E63946;
+          transform: scale(1);
         }
         50% {
-          background: #D62839;
+          transform: scale(1.08);
         }
       }
 
@@ -319,6 +319,7 @@
         color: var(--text-light);
         margin: 0 0 20px;
         line-height: 1.6;
+        text-align: justify;
       }
 
       .product-description p {
@@ -525,11 +526,11 @@
       </div>
     </section>
 
-    <section class="product-section">
-      <div class="container" style="text-align: center;">
-        <span class="section-label">Producto destacado</span>
+    <section class="product-section" style="text-align: center;">
+      <div class="container">
+        <span class="section-label" style="display: block;">Producto destacado</span>
         <div class="last-units-label">Últimas unidades</div>
-        <div id="product-card">
+        <div id="product-card" style="text-align: left;">
           <div class="loading">
             <div class="spinner"></div>
             <p style="margin-top: 12px;">Cargando producto...</p>

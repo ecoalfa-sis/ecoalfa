@@ -274,6 +274,14 @@
         line-height: 1.6;
       }
 
+      .product-description p {
+        margin: 0 0 12px;
+      }
+
+      .product-description p:last-child {
+        margin-bottom: 0;
+      }
+
       .product-price {
         display: block;
         font-size: 1.8rem;
@@ -538,6 +546,13 @@
           .replace(/'/g, "&#039;");
       }
 
+      function renderDescription(text) {
+        if (!text) return "";
+        const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
+        if (lines.length === 0) return "";
+        return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
+      }
+
       function formatPrice(value) {
         const raw = String(value || "").replace(/[^0-9]/g, "");
         const num = parseFloat(raw);
@@ -630,7 +645,8 @@
         const name = escapeHtml(item.name || "Producto");
         const rawPrice = item.price || "";
         const price = formatPrice(rawPrice);
-        const description = escapeHtml(item.description || "");
+        const description = item.description || "";
+        const descriptionHtml = renderDescription(description);
         const imageUrl = escapeHtml(item.url || "");
         const number = config.whatsappNumber || DEFAULT_CONFIG.whatsappNumber;
 
@@ -645,7 +661,7 @@
             </div>
             <div class="product-info">
               <h2 class="product-name">${name}</h2>
-              <p class="product-description">${description || "Producto natural seleccionado para tu bienestar."}</p>
+              <div class="product-description">${descriptionHtml || "<p>Producto natural seleccionado para tu bienestar.</p>"}</div>
               <span class="product-price">${price || "Consultar precio"}</span>
               <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="cta-button cta-whatsapp">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">

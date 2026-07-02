@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Tienda Naturista Ecoalfa. Productos naturales de alta calidad para tu bienestar en Colombia." />
+    <title>Ecoalfa | Tienda Naturista</title>
+
+    <link rel="icon" type="image/png" href="./assets/ecoalfa-logo.png" />
+
+    <style>
+      :root {
+        --eco-blue: #009EE3;
+        --eco-blue-dark: #0077B6;
+        --eco-blue-light: #E6F6FC;
+        --eco-green: #43B02A;
+        --eco-green-dark: #369124;
+        --eco-green-light: #E8F5E4;
+        --text: #1a1a1a;
+        --text-light: #5A6A7A;
+        --bg: #FFFFFF;
+        --bg-soft: #F5F9FC;
+        --border: #E2E8F0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+      }
+
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      img {
+        max-width: 100%;
+        display: block;
+      }
+
+      .container {
+        width: 92%;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .header {
+        background: white;
+        border-bottom: 1px solid var(--border);
+        padding: 16px 0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: var(--text);
+      }
+
+      .brand img {
+        height: 36px;
+        width: auto;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+      }
+
+      .btn-green {
+        background: var(--eco-green);
+        color: white;
+        box-shadow: 0 4px 12px rgba(67, 176, 42, 0.25);
+      }
+
+      .btn-green:hover {
+        background: var(--eco-green-dark);
+        transform: translateY(-1px);
+      }
+
+      .btn-outline {
+        background: white;
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .btn-outline:hover {
+        background: var(--bg-soft);
+      }
+
+      .page-hero {
+        padding: 48px 0 24px;
+        text-align: center;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      }
+
+      .page-hero h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0 0 8px;
+        color: var(--text);
+      }
+
+      .page-hero p {
+        color: var(--text-light);
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .store {
+        padding: 32px 0 80px;
+        background: #f8fafc;
+      }
+
+      .store-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 32px;
+      }
+
+      .product-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        border-color: var(--eco-green);
+      }
+
+      .product-image {
+        position: relative;
+        aspect-ratio: 1 / 1;
+        overflow: hidden;
+        background: #f1f5f9;
+      }
+
+      .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+
+      .product-card:hover .product-image img {
+        transform: scale(1.1);
+      }
+
+      .product-info {
+        padding: 24px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .product-category {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--eco-green);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+      }
+
+      .product-name {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 8px;
+        line-height: 1.2;
+      }
+
+      .product-description {
+        font-size: 0.95rem;
+        color: var(--text-light);
+        margin-bottom: 20px;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .product-footer {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .product-price {
+        font-size: 1.25rem;
+        font-weight: 900;
+        color: var(--text);
+      }
+
+      .product-buy {
+        background: var(--eco-green);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+      }
+
+      .product-buy:hover {
+        background: #369124;
+        transform: scale(1.05);
+      }
+
+      .product-more {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: -8px 0 12px;
+        padding: 0;
+        background: none;
+        border: none;
+        color: var(--eco-blue);
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+
+      .product-more:hover {
+        color: var(--eco-blue-dark);
+      }
+
+      .product-more::after {
+        content: "→";
+        transition: transform 0.2s ease;
+      }
+
+      .product-more:hover::after {
+        transform: translateX(4px);
+      }
+
+      .gallery-empty {
+        text-align: center;
+        padding: 48px;
+        color: var(--text-light);
+        grid-column: 1 / -1;
+      }
+
+      .product-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      .product-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .product-modal {
+        position: relative;
+        width: 100%;
+        max-width: 900px;
+        max-height: calc(100vh - 48px);
+        background: white;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+        transform: scale(0.95) translateY(20px);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: row;
+      }
+
+      .product-modal-overlay.active .product-modal {
+        transform: scale(1) translateY(0);
+      }
+
+      .product-modal-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: white;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+      }
+
+      .product-modal-close:hover {
+        transform: rotate(90deg);
+      }
+
+      .product-modal-image {
+        position: relative;
+        width: 45%;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .product-modal-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 40px;
+      }
+
+      .product-modal-content {
+        width: 55%;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .product-modal-content .product-category {
+        margin-bottom: 12px;
+      }
+
+      .product-modal-description {
+        color: var(--text-light);
+        line-height: 1.6;
+        margin-bottom: 24px;
+        flex-grow: 1;
+      }
+
+      .product-modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: auto;
+      }
+
+      .product-modal-footer .product-price {
+        font-size: 1.5rem;
+      }
+
+      .product-modal-footer .product-buy {
+        padding: 12px 28px;
+      }
+
+      .footer {
+        background: #0f172a;
+        color: white;
+        padding: 32px 0;
+        text-align: center;
+      }
+
+      .footer p {
+        margin: 0;
+        opacity: 0.8;
+        font-size: 0.9rem;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(8px);
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+
+      .loading-overlay.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .loading-box {
+        text-align: center;
+        padding: 32px;
+        max-width: 320px;
+      }
+
+      .loading-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        color: var(--eco-green);
+        animation: leaf-bounce 2s ease-in-out infinite;
+      }
+
+      .loading-icon svg {
+        width: 100%;
+        height: 100%;
+        stroke: currentColor;
+      }
+
+      .loading-text {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0 0 8px;
+        line-height: 1.3;
+      }
+
+      .loading-subtext {
+        font-size: 0.95rem;
+        color: var(--text-light);
+        margin: 0;
+      }
+
+      @keyframes leaf-bounce {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        25% { transform: translateY(-8px) rotate(-3deg); }
+        50% { transform: translateY(4px) rotate(2deg); }
+        75% { transform: translateY(-4px) rotate(-1deg); }
+      }
+
+      @media (max-width: 768px) {
+        .product-modal {
+          flex-direction: column;
+          max-height: calc(100vh - 32px);
+        }
+
+        .product-modal-image,
+        .product-modal-content {
+          width: 100%;
+        }
+
+        .product-modal-image {
+          aspect-ratio: 1 / 1;
+        }
+
+        .product-modal-content {
+          padding: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="loading-box">
+        <div class="loading-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22c4.97-4.97 4.97-13.03 0-18-4.97 4.97-4.97 13.03 0 18Z"/>
+            <path d="M12 22V2"/>
+            <path d="M12 11c1.5-2.5 4-3.5 6-2.5-1 3-3.5 5-6 4.5"/>
+            <path d="M12 17c-2.5-1-5-3-6-6.5 2.5-.5 5 1.5 6 4"/>
+          </svg>
+        </div>
+        <p class="loading-text">Espera...</p>
+        <p class="loading-subtext">Estamos cargando los mejores productos para ti.</p>
+      </div>
+    </div>
+
+    <header class="header">
+      <div class="container header-inner">
+        <a href="./landing.html" class="brand">
+          <img src="./assets/ecoalfa-logo.png" alt="Ecoalfa" />
+          <span>Ecoalfa</span>
+        </a>
+        <a href="./landing.html" class="btn btn-outline">Volver al inicio</a>
+      </div>
+    </header>
+
+    <section class="page-hero">
+      <div class="container">
+        <h1>Tienda Naturista</h1>
+        <p>Productos naturales seleccionados para tu bienestar.</p>
+      </div>
+    </section>
+
+    <section class="store">
+      <div class="container">
+        <div class="store-grid" id="store-grid">
+          <div class="gallery-empty">Cargando productos...</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="product-modal-overlay" id="product-modal-overlay">
+      <div class="product-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+        <button class="product-modal-close" id="product-modal-close" aria-label="Cerrar">×</button>
+        <div class="product-modal-image">
+          <img id="product-modal-img" src="" alt="" />
+        </div>
+        <div class="product-modal-content">
+          <span class="product-category">Tienda Naturista</span>
+          <h3 class="product-name" id="product-modal-title">Producto</h3>
+          <div class="product-modal-description" id="product-modal-description"></div>
+          <div class="product-modal-footer">
+            <span class="product-price" id="product-modal-price">$0</span>
+            <a href="#" target="_blank" rel="noopener noreferrer" class="product-buy" id="product-modal-buy">Comprar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="container">
+        <p>© 2026 Ecoalfa Medicina. Todos los derechos reservados.</p>
+      </div>
+    </footer>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+      import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+      import { getDatabase, ref as dbRef, get, child } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBs85ZtM0tUI5XYypWTze-8xfPJj3EaV5g",
+        authDomain: "ecoalfa-6f9d1.firebaseapp.com",
+        projectId: "ecoalfa-6f9d1",
+        storageBucket: "ecoalfa-6f9d1.firebasestorage.app",
+        messagingSenderId: "760816764581",
+        appId: "1:760816764581:web:31ef204b23ca5980852f4c",
+        measurementId: "G-77WWNZFNY6"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const rtdb = getDatabase(app);
+
+      const DEFAULT_CONFIG = {
+        whatsappNumber: "573228971484",
+        companyName: "Ecoalfa"
+      };
+
+      let config = { ...DEFAULT_CONFIG };
+      let currentStoreItems = [];
+
+      async function loadConfig() {
+        try {
+          const configRef = doc(db, "config", "siteConfig");
+          const snapshot = await getDoc(configRef);
+          if (snapshot.exists()) {
+            config = { ...DEFAULT_CONFIG, ...snapshot.data() };
+          }
+        } catch (error) {
+          console.warn("No se pudo cargar la configuración:", error);
+        }
+
+        try {
+          const items = await loadStoreItems();
+          await setupStore(items);
+        } catch (error) {
+          console.warn("No se pudieron cargar los productos:", error);
+        } finally {
+          hideLoadingOverlay();
+        }
+      }
+
+      function hideLoadingOverlay() {
+        const overlay = document.getElementById("loading-overlay");
+        if (overlay) overlay.classList.add("hidden");
+      }
+
+      async function loadStoreItems() {
+        let fsItems = [];
+        try {
+          const fsSnap = await getDocs(collection(db, "siteMedia"));
+          fsItems = fsSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+        } catch (e) {
+          console.warn("Error leyendo siteMedia de Firestore:", e);
+        }
+
+        let storeRtdbItems = [];
+        try {
+          const storeRtdbSnap = await get(child(dbRef(rtdb), "siteMedia/store"));
+          storeRtdbItems = storeRtdbSnap.exists()
+            ? Object.entries(storeRtdbSnap.val()).map(([id, item]) => ({ id, ...item, source: "rtdb" }))
+            : [];
+        } catch (e) {
+          console.warn("Error leyendo siteMedia/store de RTDB:", e);
+        }
+
+        return [...fsItems.filter((item) => item.kind === "store"), ...storeRtdbItems]
+          .sort((a, b) => (a.position || 0) - (b.position || 0));
+      }
+
+      function escapeHtml(text) {
+        if (!text) return "";
+        return String(text)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function formatPrice(value) {
+        const raw = String(value || "").replace(/[^0-9]/g, "");
+        const num = parseFloat(raw);
+        if (!raw || isNaN(num)) return value || "";
+        return new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+          minimumFractionDigits: 0
+        }).format(num);
+      }
+
+      async function setupStore(items) {
+        const grid = document.getElementById("store-grid");
+        if (!grid) return;
+
+        currentStoreItems = items;
+
+        if (items.length === 0) {
+          grid.innerHTML = `<div class="gallery-empty">Próximamente... estamos preparando nuestra selección de productos naturales para ti.</div>`;
+          return;
+        }
+
+        const number = config.whatsappNumber || DEFAULT_CONFIG.whatsappNumber;
+
+        grid.innerHTML = items.map((item, index) => {
+          const name = escapeHtml(item.name || "Producto");
+          const rawPrice = item.price || "";
+          const price = formatPrice(rawPrice);
+          const description = escapeHtml(item.description || "");
+          const imageUrl = escapeHtml(item.url || "");
+          const message = encodeURIComponent(
+            `Hola Ecoalfa, me interesa comprar el siguiente producto:\n\n` +
+            `*${name}*\n` +
+            `Precio: ${price}\n\n` +
+            `¿Está disponible?`
+          );
+          const whatsappLink = `https://wa.me/${number}?text=${message}`;
+          const hasDescription = (item.description || "").trim().length > 0;
+
+          return `
+            <article class="product-card">
+              <div class="product-image">
+                <img src="${imageUrl}" alt="${name}" loading="lazy" />
+              </div>
+              <div class="product-info">
+                <span class="product-category">Tienda Naturista</span>
+                <h3 class="product-name">${name}</h3>
+                <p class="product-description">${description}</p>
+                ${hasDescription ? `<button type="button" class="product-more" data-store-index="${index}">Más información</button>` : ""}
+                <div class="product-footer">
+                  <span class="product-price">${price}</span>
+                  <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="product-buy">Comprar</a>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join("");
+
+        initStoreModal(number);
+      }
+
+      function initStoreModal(whatsappNumber) {
+        const overlay = document.getElementById("product-modal-overlay");
+        const closeBtn = document.getElementById("product-modal-close");
+        const modalImg = document.getElementById("product-modal-img");
+        const modalTitle = document.getElementById("product-modal-title");
+        const modalDescription = document.getElementById("product-modal-description");
+        const modalPrice = document.getElementById("product-modal-price");
+        const modalBuy = document.getElementById("product-modal-buy");
+        const grid = document.getElementById("store-grid");
+        if (!overlay || !closeBtn || !modalImg || !modalTitle || !modalDescription || !modalPrice || !modalBuy || !grid) return;
+
+        function openModal(index) {
+          const item = currentStoreItems[index];
+          if (!item) return;
+
+          const name = escapeHtml(item.name || "Producto");
+          const rawPrice = item.price || "";
+          const price = formatPrice(rawPrice);
+          const description = escapeHtml(item.description || "");
+          const imageUrl = escapeHtml(item.url || "");
+          const message = encodeURIComponent(
+            `Hola Ecoalfa, me interesa comprar el siguiente producto:\n\n` +
+            `*${name}*\n` +
+            `Precio: ${price}\n\n` +
+            `¿Está disponible?`
+          );
+
+          modalImg.src = imageUrl;
+          modalImg.alt = name;
+          modalTitle.textContent = name;
+          modalDescription.textContent = description || "Producto natural seleccionado para tu bienestar.";
+          modalPrice.textContent = price || "Consultar precio";
+          modalBuy.href = `https://wa.me/${whatsappNumber}?text=${message}`;
+          overlay.classList.add("active");
+          document.body.style.overflow = "hidden";
+        }
+
+        function closeModal() {
+          overlay.classList.remove("active");
+          document.body.style.overflow = "";
+        }
+
+        grid.addEventListener("click", (e) => {
+          const button = e.target.closest("[data-store-index]");
+          if (!button) return;
+          openModal(Number(button.dataset.storeIndex));
+        });
+
+        closeBtn.addEventListener("click", closeModal);
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) closeModal();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && overlay.classList.contains("active")) closeModal();
+        });
+      }
+
+      loadConfig();
+    </script>
+  </body>
+</html>

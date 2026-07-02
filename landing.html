@@ -1104,6 +1104,17 @@
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
       }
 
+      .store-cta {
+        margin-top: 24px;
+        padding: 14px 32px;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      .store-cta svg {
+        flex-shrink: 0;
+      }
+
       .store-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -1208,6 +1219,48 @@
       .product-buy:hover {
         background: #369124;
         transform: scale(1.05);
+      }
+
+      .view-all-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        border: 2px dashed var(--eco-green);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 340px;
+        padding: 32px;
+        text-align: center;
+        text-decoration: none;
+        color: var(--eco-green);
+      }
+
+      .view-all-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        background: var(--eco-green-light);
+      }
+
+      .view-all-card svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        stroke: currentColor;
+      }
+
+      .view-all-card h3 {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+
+      .view-all-card p {
+        font-size: 0.95rem;
+        color: var(--text-light);
+        margin: 0;
       }
 
       .product-more {
@@ -2017,6 +2070,13 @@
           <div class="section-header">
             <h2>Tienda Naturista</h2>
             <p>Complementa tu bienestar con nuestra selección de productos naturales de alta calidad.</p>
+            <a href="./tienda.html" class="btn btn-green store-cta">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4"/>
+                <path d="M16 8a3 3 0 0 1-6 0"/>
+              </svg>
+              <span>Ir a la tienda</span>
+            </a>
           </div>
           <div class="store-grid" id="store-grid">
             <div class="gallery-empty">Cargando productos...</div>
@@ -2658,8 +2718,11 @@
         }
 
         const number = config.whatsappNumber || DEFAULT_CONFIG.whatsappNumber;
+        const maxVisible = 5;
+        const visibleItems = items.slice(0, maxVisible);
+        const hasMore = items.length > maxVisible;
 
-        grid.innerHTML = items.map((item, index) => {
+        const cardsHtml = visibleItems.map((item, index) => {
           const name = escapeHtml(item.name || "Producto");
           const rawPrice = item.price || "";
           const price = formatPrice(rawPrice);
@@ -2693,6 +2756,19 @@
             </article>
           `;
         }).join("");
+
+        const viewAllHtml = hasMore ? `
+          <a href="./tienda.html" class="view-all-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4"/>
+              <path d="M16 8a3 3 0 0 1-6 0"/>
+            </svg>
+            <h3>Ver todos</h3>
+            <p>Descubre los ${items.length} productos naturales de nuestra tienda.</p>
+          </a>
+        ` : "";
+
+        grid.innerHTML = cardsHtml + viewAllHtml;
 
         if (!storeModalInitialized) {
           initStoreModal(number);

@@ -1384,6 +1384,56 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
+        cursor: zoom-in;
+      }
+
+      .image-zoom-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.92);
+        padding: 24px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      .image-zoom-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .image-zoom-overlay img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transform-origin: center;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+      }
+
+      .image-zoom-overlay img.zoomed {
+        transform: scale(2);
+        cursor: zoom-out;
+      }
+
+      .image-zoom-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .product-modal-content {
@@ -1400,7 +1450,15 @@
         color: var(--text-light);
         line-height: 1.7;
         margin: 16px 0 24px;
-        white-space: pre-line;
+        text-align: justify;
+      }
+
+      .product-modal-description p {
+        margin: 0 0 12px;
+      }
+
+      .product-modal-description p:last-child {
+        margin-bottom: 0;
       }
 
       .product-modal-footer {
@@ -2136,6 +2194,11 @@
       </section>
     </main>
 
+    <div class="image-zoom-overlay" id="image-zoom-overlay">
+      <button class="image-zoom-close" id="image-zoom-close" aria-label="Cerrar">×</button>
+      <img id="image-zoom-img" src="" alt="" />
+    </div>
+
     <footer class="footer">
       <div class="container">
         <div class="footer-grid">
@@ -2505,6 +2568,15 @@
         }).format(num);
       }
 
+      function formatDescription(text) {
+        if (!text) return "";
+        return text
+          .split(/\r?\n/)
+          .filter((line) => line.trim().length > 0)
+          .map((line) => `<p>${escapeHtml(line)}</p>`)
+          .join("");
+      }
+
       async function setupPromoModal(config) {
         const items = await hydrateMediaItems(config.promoItems || []);
         if (!config.showPromoModal || items.length === 0) return;
@@ -2729,10 +2801,8 @@
           const description = escapeHtml(item.description || "");
           const imageUrl = escapeHtml(item.url || "");
           const message = encodeURIComponent(
-            `Hola Ecoalfa, me interesa comprar el siguiente producto de la Tienda Naturista:\n\n` +
-            `*${name}*\n` +
+            `Hola Ecoalfa, quiero comprar el producto *${name}*\n` +
             `Precio: ${price}\n` +
-            (description ? `Descripción: ${description}\n\n` : "\n") +
             `¿Está disponible?`
           );
           const whatsappLink = `https://wa.me/${number}?text=${message}`;
@@ -2799,10 +2869,8 @@
           const imageUrl = escapeHtml(item.url || "");
           const rawImageUrl = item.url || "";
           const message = encodeURIComponent(
-            `Hola Ecoalfa, me interesa comprar el siguiente producto de la Tienda Naturista:\n\n` +
-            `*${name}*\n` +
+            `Hola Ecoalfa, quiero comprar el producto *${name}*\n` +
             `Precio: ${price}\n` +
-            (description ? `Descripción: ${description}\n\n` : "\n") +
             `¿Está disponible?`
           );
 
@@ -2810,7 +2878,7 @@
           modalImg.alt = name;
           modalBg.style.backgroundImage = rawImageUrl ? `url("${rawImageUrl}")` : "none";
           modalTitle.textContent = name;
-          modalDescription.textContent = description;
+          modalDescription.innerHTML = formatDescription(description);
           modalPrice.textContent = price;
           modalBuy.href = `https://wa.me/${whatsappNumber}?text=${message}`;
 
@@ -2840,7 +2908,46 @@
             closeModal();
           }
         });
+
+        modalImg.addEventListener("click", () => openImageZoom(modalImg.src, modalImg.alt));
       }
+
+      function openImageZoom(src, alt) {
+        const zoomOverlay = document.getElementById("image-zoom-overlay");
+        const zoomImg = document.getElementById("image-zoom-img");
+        if (!zoomOverlay || !zoomImg || !src) return;
+        zoomImg.src = src;
+        zoomImg.alt = alt || "";
+        zoomImg.classList.remove("zoomed");
+        zoomOverlay.classList.add("active");
+      }
+
+      function initImageZoom() {
+        const zoomOverlay = document.getElementById("image-zoom-overlay");
+        const zoomImg = document.getElementById("image-zoom-img");
+        const zoomClose = document.getElementById("image-zoom-close");
+        if (!zoomOverlay || !zoomImg || !zoomClose) return;
+
+        zoomImg.addEventListener("click", () => zoomImg.classList.toggle("zoomed"));
+        zoomClose.addEventListener("click", () => {
+          zoomOverlay.classList.remove("active");
+          zoomImg.classList.remove("zoomed");
+        });
+        zoomOverlay.addEventListener("click", (e) => {
+          if (e.target === zoomOverlay) {
+            zoomOverlay.classList.remove("active");
+            zoomImg.classList.remove("zoomed");
+          }
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && zoomOverlay.classList.contains("active")) {
+            zoomOverlay.classList.remove("active");
+            zoomImg.classList.remove("zoomed");
+          }
+        });
+      }
+
+      initImageZoom();
 
       let heroMediaItems = [];
       let heroCurrentSlide = 0;

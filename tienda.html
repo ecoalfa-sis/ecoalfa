@@ -139,6 +139,42 @@
         background: #f8fafc;
       }
 
+      .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 12px 20px;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+
+      .search-bar:focus-within {
+        border-color: var(--eco-green);
+        box-shadow: 0 4px 16px rgba(67, 176, 42, 0.12);
+      }
+
+      .search-bar svg {
+        flex-shrink: 0;
+        color: var(--text-light);
+      }
+
+      .search-bar input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        font-size: 1rem;
+        color: var(--text);
+        outline: none;
+      }
+
+      .search-bar input::placeholder {
+        color: var(--text-light);
+      }
+
       .store-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -375,6 +411,61 @@
         line-height: 1.6;
         margin-bottom: 24px;
         flex-grow: 1;
+        text-align: justify;
+        white-space: pre-line;
+      }
+
+      .product-modal-image {
+        cursor: zoom-in;
+      }
+
+      .image-zoom-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.92);
+        padding: 24px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      .image-zoom-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .image-zoom-overlay img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transform-origin: center;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+      }
+
+      .image-zoom-overlay img.zoomed {
+        transform: scale(2);
+        cursor: zoom-out;
+      }
+
+      .image-zoom-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .product-modal-footer {
@@ -521,6 +612,13 @@
 
     <section class="store">
       <div class="container">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" id="store-search" placeholder="Buscar producto..." autocomplete="off" />
+        </div>
         <div class="store-grid" id="store-grid">
           <div class="gallery-empty">Cargando productos...</div>
         </div>
@@ -530,7 +628,7 @@
     <div class="product-modal-overlay" id="product-modal-overlay">
       <div class="product-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
         <button class="product-modal-close" id="product-modal-close" aria-label="Cerrar">×</button>
-        <div class="product-modal-image">
+        <div class="product-modal-image" id="product-modal-image">
           <img id="product-modal-img" src="" alt="" />
         </div>
         <div class="product-modal-content">
@@ -543,6 +641,11 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="image-zoom-overlay" id="image-zoom-overlay">
+      <button class="image-zoom-close" id="image-zoom-close" aria-label="Cerrar">×</button>
+      <img id="image-zoom-img" src="" alt="" />
     </div>
 
     <footer class="footer">
@@ -660,42 +763,89 @@
         }
 
         const number = config.whatsappNumber || DEFAULT_CONFIG.whatsappNumber;
+        renderStoreItems(items, number);
+        bindSearch(items, number);
+      }
 
-        grid.innerHTML = items.map((item, index) => {
-          const name = escapeHtml(item.name || "Producto");
-          const rawPrice = item.price || "";
-          const price = formatPrice(rawPrice);
-          const description = escapeHtml(item.description || "");
-          const imageUrl = escapeHtml(item.url || "");
-          const message = encodeURIComponent(
-            `Hola Ecoalfa, me interesa comprar el siguiente producto:\n\n` +
-            `*${name}*\n` +
-            `Precio: ${price}\n\n` +
-            `¿Está disponible?`
-          );
-          const whatsappLink = `https://wa.me/${number}?text=${message}`;
-          const hasDescription = (item.description || "").trim().length > 0;
+      function renderStoreItems(items, number) {
+        const grid = document.getElementById("store-grid");
+        if (!grid) return;
 
-          return `
-            <article class="product-card">
-              <div class="product-image">
-                <img src="${imageUrl}" alt="${name}" loading="lazy" />
-              </div>
-              <div class="product-info">
-                <span class="product-category">Tienda Naturista</span>
-                <h3 class="product-name">${name}</h3>
-                <p class="product-description">${description}</p>
-                ${hasDescription ? `<button type="button" class="product-more" data-store-index="${index}">Más información</button>` : ""}
-                <div class="product-footer">
-                  <span class="product-price">${price}</span>
-                  <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="product-buy">Comprar</a>
-                </div>
-              </div>
-            </article>
-          `;
-        }).join("");
+        if (items.length === 0) {
+          grid.innerHTML = `<div class="gallery-empty">No encontramos productos con ese nombre.</div>`;
+          return;
+        }
+
+        grid.innerHTML = items.map((item, index) => renderProductCard(item, index, number, index)).join("");
 
         initStoreModal(number);
+      }
+
+      function renderProductCard(item, displayIndex, number, originalIndex) {
+        const name = escapeHtml(item.name || "Producto");
+        const rawPrice = item.price || "";
+        const price = formatPrice(rawPrice);
+        const description = escapeHtml(item.description || "");
+        const imageUrl = escapeHtml(item.url || "");
+        const message = encodeURIComponent(
+          `Hola Ecoalfa, quiero comprar el producto *${name}*\n` +
+          `Precio: ${price}\n` +
+          `¿Está disponible?`
+        );
+        const whatsappLink = `https://wa.me/${number}?text=${message}`;
+        const hasDescription = (item.description || "").trim().length > 0;
+        const originalIdx = originalIndex !== undefined ? originalIndex : displayIndex;
+
+        return `
+          <article class="product-card">
+            <div class="product-image">
+              <img src="${imageUrl}" alt="${name}" loading="lazy" />
+            </div>
+            <div class="product-info">
+              <span class="product-category">Tienda Naturista</span>
+              <h3 class="product-name">${name}</h3>
+              <p class="product-description">${description}</p>
+              ${hasDescription ? `<button type="button" class="product-more" data-store-index="${originalIdx}">Más información</button>` : ""}
+              <div class="product-footer">
+                <span class="product-price">${price}</span>
+                <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="product-buy">Comprar</a>
+              </div>
+            </div>
+          </article>
+        `;
+      }
+
+      function normalizeText(text) {
+        return String(text || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+      }
+
+      function bindSearch(allItems, number) {
+        const input = document.getElementById("store-search");
+        const grid = document.getElementById("store-grid");
+        if (!input || !grid) return;
+
+        input.addEventListener("input", () => {
+          const query = normalizeText(input.value);
+          if (!query) {
+            renderStoreItems(allItems, number);
+            return;
+          }
+          const filtered = allItems
+            .map((item, index) => ({ item, index }))
+            .filter(({ item }) =>
+              normalizeText(item.name).includes(query) ||
+              normalizeText(item.description).includes(query)
+            );
+          if (filtered.length === 0) {
+            grid.innerHTML = `<div class="gallery-empty">No encontramos productos con ese nombre.</div>`;
+            return;
+          }
+          grid.innerHTML = filtered.map(({ item, index }) => renderProductCard(item, index, number, index)).join("");
+          initStoreModal(number);
+        });
       }
 
       function initStoreModal(whatsappNumber) {
@@ -719,16 +869,15 @@
           const description = escapeHtml(item.description || "");
           const imageUrl = escapeHtml(item.url || "");
           const message = encodeURIComponent(
-            `Hola Ecoalfa, me interesa comprar el siguiente producto:\n\n` +
-            `*${name}*\n` +
-            `Precio: ${price}\n\n` +
+            `Hola Ecoalfa, quiero comprar el producto *${name}*\n` +
+            `Precio: ${price}\n` +
             `¿Está disponible?`
           );
 
           modalImg.src = imageUrl;
           modalImg.alt = name;
           modalTitle.textContent = name;
-          modalDescription.textContent = description || "Producto natural seleccionado para tu bienestar.";
+          modalDescription.innerHTML = formatDescription(description || "Producto natural seleccionado para tu bienestar.");
           modalPrice.textContent = price || "Consultar precio";
           modalBuy.href = `https://wa.me/${whatsappNumber}?text=${message}`;
           overlay.classList.add("active");
@@ -752,6 +901,57 @@
         });
         document.addEventListener("keydown", (e) => {
           if (e.key === "Escape" && overlay.classList.contains("active")) closeModal();
+        });
+
+        setupImageZoom();
+      }
+
+      function formatDescription(text) {
+        if (!text) return "";
+        return text
+          .split(/\r?\n/)
+          .filter((line) => line.trim().length > 0)
+          .map((line) => `<p>${escapeHtml(line)}</p>`)
+          .join("");
+      }
+
+      function setupImageZoom() {
+        const modalImage = document.getElementById("product-modal-image");
+        const zoomOverlay = document.getElementById("image-zoom-overlay");
+        const zoomImg = document.getElementById("image-zoom-img");
+        const zoomClose = document.getElementById("image-zoom-close");
+        if (!modalImage || !zoomOverlay || !zoomImg || !zoomClose) return;
+
+        modalImage.addEventListener("click", () => {
+          const modalImg = document.getElementById("product-modal-img");
+          if (!modalImg || !modalImg.src) return;
+          zoomImg.src = modalImg.src;
+          zoomImg.alt = modalImg.alt;
+          zoomOverlay.classList.add("active");
+          zoomImg.classList.remove("zoomed");
+        });
+
+        zoomImg.addEventListener("click", () => {
+          zoomImg.classList.toggle("zoomed");
+        });
+
+        zoomClose.addEventListener("click", () => {
+          zoomOverlay.classList.remove("active");
+          zoomImg.classList.remove("zoomed");
+        });
+
+        zoomOverlay.addEventListener("click", (e) => {
+          if (e.target === zoomOverlay) {
+            zoomOverlay.classList.remove("active");
+            zoomImg.classList.remove("zoomed");
+          }
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && zoomOverlay.classList.contains("active")) {
+            zoomOverlay.classList.remove("active");
+            zoomImg.classList.remove("zoomed");
+          }
         });
       }
 
